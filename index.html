@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="app-browser-title">رحلة الحب — Love Hunt</title>
+  <!-- Meta description -->
+  <meta name="description" content="رحلة الحب - منصة رومانسية تفاعلية خاصة بمشاركة الذكريات، الأحلام، والصور بين الشريكين.">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&family=Noto+Serif+JP:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Quicksand:wght@400;600;700&family=Outfit:wght@300;400;600;700&family=Pacifico&family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  <!-- Supabase Library (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Canvas Confetti (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body class="rtl-mode">
+
+  <!-- Theme Particle Background Canvas -->
+  <canvas id="theme-canvas"></canvas>
+
+  <!-- Global Audio Player HUD (Persists across view changes) -->
+  <div id="global-audio-hud" class="audio-hud hidden">
+    <div class="audio-hud-info">
+      <i class="fa-solid fa-music music-note-anim"></i>
+      <span id="audio-hud-title">لحن الحب</span>
+    </div>
+    <div class="audio-hud-controls">
+      <button id="audio-hud-prev" title="الأغنية السابقة"><i class="fa-solid fa-backward"></i></button>
+      <button id="audio-hud-play" class="play-btn" title="تشغيل/إيقاف"><i class="fa-solid fa-play"></i></button>
+      <button id="audio-hud-next" title="الأغنية التالية"><i class="fa-solid fa-forward"></i></button>
+      <div class="volume-slider-container">
+        <i class="fa-solid fa-volume-low"></i>
+        <input type="range" id="audio-hud-volume" min="0" max="1" step="0.05" value="0.5">
+      </div>
+    </div>
+    <audio id="global-bg-music" loop></audio>
+  </div>
+  <!-- Notification Banner -->
+  <div id="toast-container"></div>
+
+  <!-- Primary Application Wrapper -->
+  <main id="app-container">
+
+    <!-- ========================================== -->
+    <!-- 1. SECURITY LOCK SCREEN (FIRST PAGE)       -->
+    <!-- ========================================== -->
+    <section id="screen-lock" class="app-screen">
+      <div class="lock-box fade-in">
+        <div class="lock-icon">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <h2 class="lock-title" id="lock-screen-title">مغلق بالحب 🔒</h2>
+        <p class="lock-desc" id="lock-screen-desc">الرجاء إدخال كلمة المرور المشتركة للدخول إلى مساحة الحب.</p>
+        <form id="form-lock-screen">
+          <div class="form-group">
+            <div class="input-password-wrapper">
+              <input type="password" id="lock-password-input" required placeholder="رمز المرور...">
+              <button type="button" class="btn-toggle-password"><i class="fa-regular fa-eye"></i></button>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary btn-block"><span id="lock-screen-btn">فتح المساحة 🔑</span> <i class="fa-solid fa-heart"></i></button>
+        </form>
+        <div id="lock-error-msg" class="auth-error-msg hidden">كلمة المرور غير صحيحة، حاول مجدداً يا حب! 💖</div>
+      </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- 3. GAME PLAYER INTERFACE & HEART MAP       -->
+    <!-- ========================================== -->
+    <section id="screen-player" class="app-screen hidden">
+      <div id="player-active-card-container" class="player-wrapper">
+        
+        <!-- Interactive Heart Progress Map -->
+        <div class="heart-map-card">
+          <div class="heart-map-container">
+            <svg class="heart-map-svg" viewBox="0 0 100 40">
+              <!-- Dotted path from left to right -->
+              <path id="heart-map-path" d="M 12 20 Q 50 6 88 20" fill="none" stroke="#ffccd5" stroke-width="1.2" stroke-dasharray="2 2"></path>
+            </svg>
+            
+            <!-- Avatar Left (Him) -->
+            <div id="avatar-boy" class="map-avatar-node boy-avatar">
+              <div class="avatar-img-circle">
+                <img src="" id="avatar-boy-img" alt="صورة الشاب">
+              </div>
+              <div class="map-node-heart boy-heart"><i class="fa-solid fa-heart"></i></div>
+            </div>
+
+            <!-- Avatar Right (Her) - This one slides towards the left -->
+            <div id="avatar-girl" class="map-avatar-node girl-avatar">
+              <div class="avatar-img-circle">
+                <img src="" id="avatar-girl-img" alt="صورة الفتاة">
+              </div>
+              <div class="map-node-heart girl-heart"><i class="fa-solid fa-heart"></i></div>
+            </div>
+
+            <!-- Dynamic stage dot landmarks on map -->
+            <div id="map-stage-dots"></div>
+          </div>
+        </div>
+
+        <!-- Stage Card -->
+        <div id="player-stage-card" class="stage-card">
+          <!-- Card Header (Status) -->
+          <div class="stage-card-header">
+            <span id="player-stage-counter">المرحلة 1 من 5</span>
+          </div>
+
+          <!-- Card Body -->
+          <div class="stage-card-body">
+            <!-- Media Attachment -->
+            <div id="player-media-container" class="stage-media hidden"></div>
+
+            <h2 id="player-stage-title" class="stage-title">عنوان اللغز</h2>
+            <p id="player-stage-desc" class="stage-description">وصف اللغز أو الموقف المثير...</p>
+
+            <div class="stage-question-card">
+              <div class="question-title" id="player-label-question">السؤال المطلوب:</div>
+              <p id="player-question-text" class="question-text">ما هي الكلمة التي قلناها؟</p>
+
+              <form id="form-player-challenge">
+                <div id="player-input-wrapper" class="player-answer-wrapper"></div>
+                <div id="player-feedback-msg" class="player-feedback hidden"></div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Card Footer (Controls) -->
+          <div class="stage-card-footer">
+            <button type="button" id="player-btn-hint" class="btn-secondary" style="display: none !important;"><i class="fa-regular fa-lightbulb"></i> <span id="player-text-hint">عرض تلميح 💡</span></button>
+            <button type="button" id="player-btn-submit" class="btn-primary" style="width: 100%;"><span id="player-text-submit">إرسال الإجابة 💌</span> <i class="fa-solid fa-circle-check"></i></button>
+          </div>
+
+          <!-- Hint display box -->
+          <div id="player-hint-box" class="hint-popup-box hidden fade-in">
+            <div class="hint-header" id="player-label-hint">💡 تلميح للحل:</div>
+            <p id="player-hint-text">التلميح المكتوب...</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 4. CELEBRATION / GIFT PAGE                 -->
+    <!-- ========================================== -->
+    <section id="screen-celebration" class="app-screen hidden">
+      <div class="celebration-wrapper fade-in">
+        <h1 class="celebration-title" id="celebration-main-title">تهانينا يا حبيبي! 🎉❤️</h1>
+        <p class="celebration-desc" id="celebration-concluding-msg">لقد تمكنت من فك رموز ذكرياتنا واجتياز كل المراحل بنجاح. لقد جمعنا الحب والوفاء معًا.</p>
+        
+        <div id="celebration-media-wrapper" class="celebration-media hidden"></div>
+
+        <!-- The 3D Gift Envelope -->
+        <div class="gift-box-container">
+          <div class="gift-envelope" id="gift-envelope">
+            <div class="envelope-flap"></div>
+            <div class="envelope-body"></div>
+            <div class="envelope-card scale-in">
+              <div class="gift-card-inner">
+                <i class="fa-solid fa-heart envelope-card-heart"></i>
+                <h3 id="celebration-gift-title">رسالة حبنا الأبدية</h3>
+                <div class="gift-card-text-scroll">
+                  <p id="celebration-gift-text">حبيبتي الغالية، هذه رسالة حب مخبأة لك...</p>
+                </div>
+              </div>
+            </div>
+            <div class="envelope-front">
+              <div class="seal-button" id="btn-open-gift">
+                <i class="fa-solid fa-heart"></i>
+                <span id="celebration-text-open">افتح الهدية ✉️</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="celebration-actions hidden" id="celebration-actions-container">
+          <button id="celebration-btn-enter-dashboard" class="btn-primary btn-grow"><i class="fa-solid fa-door-open"></i> <span id="celebration-text-enter">دخول عالمنا المشترك 🚪✨</span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 5. RELATIONSHIP STEPS JOURNEY              -->
+    <!-- ========================================== -->
+    <section id="screen-journey" class="app-screen hidden">
+      <div class="journey-wrapper">
+        
+        <!-- Step Flow Header -->
+        <header class="journey-header">
+          <div class="journey-header-title">
+            <h1 class="journey-brand"><i class="fa-solid fa-heart-circle-check"></i> عالم الحب الخاص بنا</h1>
+            <p class="journey-subtitle">قصتنا الجميلة تنكشف خطوة بخطوة</p>
+          </div>
+          <button id="journey-btn-logout" class="btn-secondary" title="الخروج من المساحة"><i class="fa-solid fa-right-from-bracket"></i></button>
+        </header>
+
+        <!-- Steps Content Viewer -->
+        <div class="steps-slider-container">
+          
+          <!-- STEP 1: DAYS TOGETHER (أيامنا معًا) -->
+          <div id="journey-step-1" class="journey-step-card active fade-in">
+            <div class="step-card-header">
+              <h2 id="journey-title-step-1">أيامنا معاً 📅</h2>
+              <span class="step-badge">الخطوة ١ من ٥</span>
+            </div>
+            <div class="step-card-body text-center">
+              <div class="days-together-circle heartbeat-pulse">
+                <span id="journey-stat-days">0</span>
+                <label>يومًا من الحب</label>
+              </div>
+              <p class="step-desc-para">كل يوم نقضيه معاً هو هدية جميلة من العمر. نحن نوثق أيامنا وثوانينا التي نمضيها يداً بيد.</p>
+            </div>
+            <div class="step-card-footer">
+              <button id="journey-btn-next-1" class="btn-primary btn-block">أحلامنا المشتركة ➡️ <i class="fa-solid fa-arrow-left"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 2: DREAMS & GOALS (خططنا وأحلامنا) -->
+          <div id="journey-step-2" class="journey-step-card hidden">
+            <div class="step-card-header">
+              <h2 id="journey-title-step-2">خططنا وأحلامنا ☁️</h2>
+              <span class="step-badge">الخطوة ٢ من ٥</span>
+            </div>
+            <div class="step-card-body">
+              <p class="step-desc-para text-center">قائمة الأمنيات والأحلام التي تعهدنا بتحقيقها معاً طوال العمر.</p>
+              
+              <div class="dreams-progress-indicator">
+                <span class="progress-percent" id="journey-stat-dreams">0%</span>
+                <div class="progress-bar-container">
+                  <div class="progress-bar" id="journey-dreams-progress-bar" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <div id="journey-dreams-list" class="dreams-list-container">
+                <!-- Checkboxes dreams render here (Strike-through if checked, interactive disabled) -->
+              </div>
+            </div>
+            <div class="step-card-footer">
+              <button id="journey-btn-next-2" class="btn-primary btn-block">معرض صورنا ➡️ <i class="fa-solid fa-arrow-left"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 3: PHOTO GALLERY (معرض الصور) -->
+          <div id="journey-step-3" class="journey-step-card hidden">
+            <div class="step-card-header">
+              <h2 id="journey-title-step-3">معرض صورنا 🖼️</h2>
+              <span class="step-badge">الخطوة ٣ من ٥</span>
+            </div>
+            <div class="step-card-body">
+              <p class="step-desc-para text-center">ألبوم يحتوي على أجمل ذكرياتنا ولقطاتنا الدافئة معًا.</p>
+              
+              <div id="journey-gallery-grid" class="gallery-grid-container">
+                <!-- Photo thumbnails grid -->
+              </div>
+            </div>
+            <div class="step-card-footer">
+              <button id="journey-btn-next-3" class="btn-primary btn-block">مواعيد تهمنا ➡️ <i class="fa-solid fa-arrow-left"></i></button>
+            </div>
+          </div>
+
+          <div id="journey-step-4" class="journey-step-card hidden">
+            <div class="step-card-header">
+              <h2 id="journey-title-step-4">مواعيد تهمنا 📌</h2>
+              <span class="step-badge">الخطوة ٤ من ٥</span>
+            </div>
+            <div class="step-card-body">
+              <p class="step-desc-para text-center">التواريخ المميزة والعد التنازلي للمناسبات التي نحتفل بها دائمًا.</p>
+              
+              <!-- Approaching Dates alarms -->
+              <div id="journey-dates-alerts" class="anniversary-reminders-wrapper hidden"></div>
+
+              <div id="journey-dates-grid" class="dates-grid-container">
+                <!-- Grid of dates and tickers -->
+              </div>
+            </div>
+            <div class="step-card-footer">
+              <button id="journey-btn-next-4" class="btn-primary btn-block">تاريخ لقاءاتنا ➡️ <i class="fa-solid fa-arrow-left"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 5: RELATIONSHIP MILESTONES (تاريخ لقاءاتنا) -->
+          <div id="journey-step-5" class="journey-step-card hidden">
+            <div class="step-card-header">
+              <h2 id="journey-title-step-5">تاريخ لقاءاتنا ⏳</h2>
+              <span class="step-badge">الخطوة ٥ من ٥</span>
+            </div>
+            <div class="step-card-body">
+              <p class="step-desc-para text-center">أوقات مميزة ولحظات فارقة مضت، نحسب الوقت المنقضي منذ حدوثها.</p>
+              
+              <div id="journey-milestones-grid" class="dates-grid-container">
+                <!-- Grid of past milestones cards -->
+              </div>
+            </div>
+            <div class="step-card-footer">
+              <button id="journey-btn-restart" class="btn-secondary btn-block"><i class="fa-solid fa-rotate-right"></i> العودة للبداية</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Lightbox Modal for Gallery view -->
+      <div id="gallery-lightbox" class="lightbox hidden fade-in">
+        <div class="lightbox-overlay"></div>
+        <button class="lightbox-close"><i class="fa-solid fa-xmark"></i></button>
+        <button class="lightbox-prev"><i class="fa-solid fa-chevron-right"></i></button>
+        <div class="lightbox-content scale-in">
+          <img id="lightbox-img" src="" alt="صورة المعرض">
+          <p id="lightbox-caption" class="lightbox-caption-text"></p>
+        </div>
+        <button class="lightbox-next"><i class="fa-solid fa-chevron-left"></i></button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Application Entry module -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      const msg = 'JS Error: ' + message + '\nFile: ' + source + '\nLine: ' + lineno + ':' + colno + (error ? '\nStack: ' + error.stack : '');
+      alert(msg);
+      const errorDiv = document.createElement('div');
+      errorDiv.style.position = 'fixed';
+      errorDiv.style.top = '10px';
+      errorDiv.style.left = '10px';
+      errorDiv.style.right = '10px';
+      errorDiv.style.backgroundColor = '#ffdddd';
+      errorDiv.style.color = '#ff0000';
+      errorDiv.style.border = '2px solid #ff0000';
+      errorDiv.style.padding = '15px';
+      errorDiv.style.zIndex = '99999';
+      errorDiv.style.fontFamily = 'monospace';
+      errorDiv.style.whiteSpace = 'pre-wrap';
+      errorDiv.style.borderRadius = '8px';
+      errorDiv.innerHTML = '<strong>خطأ جافاسكريبت (JS Error):</strong><br>' + message + '<br>في الملف: ' + source + '<br>السطر: ' + lineno + ':' + colno + (error ? '<br>التفاصيل: ' + error.stack : '');
+      (document.body || document.documentElement).appendChild(errorDiv);
+      return false;
+    };
+    window.addEventListener('unhandledrejection', function(event) {
+      const msg = 'Unhandled Rejection: ' + event.reason + (event.reason && event.reason.stack ? '\nStack: ' + event.reason.stack : '');
+      alert(msg);
+      const errorDiv = document.createElement('div');
+      errorDiv.style.position = 'fixed';
+      errorDiv.style.top = '10px';
+      errorDiv.style.left = '10px';
+      errorDiv.style.right = '10px';
+      errorDiv.style.backgroundColor = '#ffeecc';
+      errorDiv.style.color = '#cc5500';
+      errorDiv.style.border = '2px solid #cc5500';
+      errorDiv.style.padding = '15px';
+      errorDiv.style.zIndex = '99999';
+      errorDiv.style.fontFamily = 'monospace';
+      errorDiv.style.whiteSpace = 'pre-wrap';
+      errorDiv.style.borderRadius = '8px';
+      errorDiv.innerHTML = '<strong>خطأ غير معالج (Promise Rejection):</strong><br>' + event.reason + (event.reason && event.reason.stack ? '<br>التفاصيل: ' + event.reason.stack : '');
+      (document.body || document.documentElement).appendChild(errorDiv);
+    });
+  </script>
+  <title>لوحة التحكم — صيد الحب</title>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom Stylesheet (Using relative path to root style.css) -->
+  <link rel="stylesheet" href="../style.css">
+  <!-- Supabase Library (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="admin-body rtl-mode">
+
+  <!-- Theme Particle Background Canvas -->
+  <canvas id="theme-canvas"></canvas>
+
+  <!-- Notification Banner -->
+  <div id="toast-container"></div>
+
+  <!-- ========================================== -->
+  <!-- 0. ADMIN MASTER LOGIN SCREEN               -->
+  <!-- ========================================== -->
+  <section id="admin-screen-master-login" class="app-screen">
+    <div class="lock-box fade-in" style="max-width: 500px;">
+      <div class="lock-icon">
+        <i class="fa-solid fa-user-shield" style="color: var(--progress-bar-color);"></i>
+      </div>
+      <h2 class="lock-title">بوابة لوحة التحكم الرئيسية ⚙️</h2>
+      <p class="lock-desc">أدخل كلمة المرور الرئيسية للأدمن للتحكم الكامل بكافة مساحات وألعاب الحب.</p>
+      <form id="form-master-login">
+        <div class="form-group">
+          <div class="input-password-wrapper">
+            <input type="password" id="master-password" required placeholder="أدخل كلمة المرور الرئيسية...">
+            <button type="button" class="btn-toggle-password"><i class="fa-regular fa-eye"></i></button>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary btn-block">دخول لوحة التحكم <i class="fa-solid fa-right-to-bracket"></i></button>
+      </form>
+      <div id="master-login-error" class="auth-error-msg hidden">كلمة المرور الرئيسية غير صحيحة! ❌</div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- 1. ADMIN MASTER DASHBOARD                  -->
+  <!-- ========================================== -->
+  <section id="admin-screen-dashboard" class="creator-container hidden" style="max-width: 1200px; margin: 0 auto; padding: 30px 20px;">
+    <!-- Header -->
+    <header class="creator-header">
+      <div class="creator-header-left">
+        <h1>لوحة التحكم العامة للأدمن 📊</h1>
+        <p class="help-text">إدارة جميع مساحات الحب النشطة والتحليلات وتعديلها أو حذفها.</p>
+      </div>
+      <div class="creator-header-right">
+        <button id="dashboard-btn-create" class="btn-primary"><i class="fa-solid fa-plus"></i> إنشاء مساحة حب جديدة</button>
+        <button id="dashboard-btn-logout" class="btn-secondary"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+      </div>
+    </header>
+
+    <div class="admin-layout-grid" style="margin-top: 25px; display: grid; grid-template-columns: 2fr 1fr; gap: 25px;">
+      
+      <!-- Spaces Table -->
+      <div style="background: white; border-radius: 16px; border: 1px solid #e5e5e5; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); overflow: hidden;">
+        <h3 style="margin-bottom: 20px; font-weight: 800; border-bottom: 2px solid #f5f5f5; padding-bottom: 8px;"><i class="fa-solid fa-heart-pulse" style="color: var(--progress-bar-color);"></i> مساحات الحب النشطة</h3>
+        
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; text-align: right;">
+            <thead>
+              <tr style="border-bottom: 2px solid #eee; font-weight: bold; color: #555;">
+                <th style="padding: 12px 8px;">رمز المساحة (UUID)</th>
+                <th style="padding: 12px 8px;">تاريخ الإنشاء</th>
+                <th style="padding: 12px 8px; text-align: center;">الزيارات</th>
+                <th style="padding: 12px 8px; text-align: center;">حل الألغاز</th>
+                <th style="padding: 12px 8px; text-align: center;">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-spaces-list">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Settings Sidebar -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <!-- Change Master Password Card -->
+        <div style="background: white; border-radius: 16px; border: 1px solid #e5e5e5; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
+          <h3 style="margin-bottom: 15px; font-weight: 800; border-bottom: 2px solid #f5f5f5; padding-bottom: 8px;"><i class="fa-solid fa-key" style="color: #d81b60;"></i> كلمة المرور الرئيسية</h3>
+          <form id="form-change-master-password">
+            <div class="form-group">
+              <label for="new-master-password">كلمة المرور الجديدة</label>
+              <div class="input-password-wrapper">
+                <input type="password" id="new-master-password" required placeholder="أدخل رمز المرور الجديد..." minlength="4">
+                <button type="button" class="btn-toggle-password"><i class="fa-regular fa-eye"></i></button>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary btn-block"><i class="fa-solid fa-floppy-disk"></i> تغيير رمز المرور</button>
+          </form>
+        </div>
+
+        <!-- Quick Info Card -->
+        <div style="background: white; border-radius: 16px; border: 1px solid #e5e5e5; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); color: #555;">
+          <h4 style="font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-info-circle"></i> تعليمات الاستخدام</h4>
+          <p style="font-size: 0.9rem; line-height: 1.5; margin-bottom: 8px;">يمكنك الضغط على <strong>"إدارة"</strong> للدخول لمحرر المساحة لتعديل ألغازها وصورها ونصوصها مباشرة دون الحاجة لكلمة مرور فرعية.</p>
+          <p style="font-size: 0.9rem; line-height: 1.5;">حذف مساحة معينة سيقوم بمسح كافة الذكريات والموسيقى والمحتويات الخاصة بها نهائياً.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Modal inside Dashboard -->
+    <div id="modal-admin-create" class="modal hidden">
+      <div class="modal-content scale-in">
+        <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        <h2 class="modal-title">إنشاء مساحة حب جديدة 💖</h2>
+        <p class="modal-desc">قم بتعيين كلمة مرور اللعبة التي ستقدمها لشريكتك لفتح الأسئلة، وكلمة مرور سرية أخرى للإدارة الفردية للتحكم بالخيارات.</p>
+        <form id="form-admin-create">
+          <div class="form-group">
+            <label for="setup-player-password">كلمة مرور اللعبة (للشريكة)</label>
+            <div class="input-password-wrapper">
+              <input type="password" id="setup-player-password" required placeholder="رمز فك قفل اللعبة..." minlength="4">
+              <button type="button" class="btn-toggle-password"><i class="fa-regular fa-eye"></i></button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="setup-admin-password">كلمة مرور لوحة الإدارة الفردية</label>
+            <div class="input-password-wrapper">
+              <input type="password" id="setup-admin-password" required placeholder="رمز الدخول للوحة التحكم..." minlength="4">
+              <button type="button" class="btn-toggle-password"><i class="fa-regular fa-eye"></i></button>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary btn-block">توليد مساحة الحب والبدء <i class="fa-solid fa-check"></i></button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- 2. MAIN CREATOR PANEL                      -->
+  <!-- ========================================== -->
+  <main id="admin-panel-container" class="creator-container hidden" style="max-width: 1300px; margin: 0 auto; padding: 30px 20px;">
+    
+    <!-- Header -->
+    <header class="creator-header">
+      <div class="creator-header-left">
+        <h1>لوحة تحكم وتصميم رحلة الحب ⚙️</h1>
+        <p class="help-text">تحكم كامل بكل حرف وزر وصورة في التطبيق.</p>
+      </div>
+      <div class="creator-header-right">
+        <button id="admin-btn-back-dashboard" class="btn-secondary" style="background-color: var(--button-hover-color); color: white;"><i class="fa-solid fa-arrow-right"></i> العودة للوحة الرئيسية</button>
+        <button id="admin-btn-logout" class="btn-secondary"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+        <button id="admin-btn-save" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i> حفظ كافة التعديلات</button>
+      </div>
+    </header>
+
+    <!-- Admin Panel Tabbed Layout -->
+    <div class="admin-layout-grid" style="margin-top: 25px;">
+      
+      <!-- Tabs Navigation (Right Sidebar) -->
+      <div class="admin-tabs-card" style="background: white; border-radius: 16px; border: 1px solid #e5e5e5; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
+        <h3 style="margin-bottom: 15px; font-weight: 800; border-bottom: 2px solid #f5f5f5; padding-bottom: 8px;">قائمة الخيارات</h3>
+        <div class="admin-sidebar-buttons" style="display: flex; flex-direction: column; gap: 8px;">
+          <button class="admin-tab-btn active" data-admin-tab="admin-tab-stages"><i class="fa-solid fa-list-ol"></i> مراحل الألغاز</button>
+          <button class="admin-tab-btn" data-admin-tab="admin-tab-texts"><i class="fa-solid fa-font"></i> نصوص الواجهات</button>
+          <button class="admin-tab-btn" data-admin-tab="admin-tab-style"><i class="fa-solid fa-palette"></i> الألوان والسمات</button>
+          <button class="admin-tab-btn" data-admin-tab="admin-tab-music"><i class="fa-solid fa-music"></i> الموسيقى الخلفية</button>
+          <button class="admin-tab-btn" data-admin-tab="admin-tab-dreams"><i class="fa-solid fa-cloud"></i> قائمة الأحلام</button>
+          <button class="admin-tab-btn" data-admin-tab="admin-tab-memories"><i class="fa-solid fa-timeline"></i> شريط الذكريات</button>
+          <button class="admin-tab-btn" data-admin-tab="admin-tab-gallery"><i class="fa-solid fa-images"></i> معرض الصور</button>
+          <button class="admin-tab-btn" data-admin-tab="admin-tab-dates"><i class="fa-solid fa-calendar-check"></i> المواعيد والعد</button>
+          <button class="admin-tab-btn" data-admin-tab="admin-tab-share"><i class="fa-solid fa-share-nodes"></i> الرابط والإحصائيات</button>
+        </div>
+      </div>
+
+      <!-- Tab Content Area (Left Main) -->
+      <div class="admin-content-card" style="background: white; border-radius: 16px; border: 1px solid #e5e5e5; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); min-height: 550px;">
+        
+        <!-- TAB 1: STAGES -->
+        <div id="admin-tab-stages" class="admin-pane active">
+          <div class="stages-header">
+            <h3>إعداد مراحل اللعبة</h3>
+            <button id="admin-btn-add-stage" class="btn-small btn-primary"><i class="fa-solid fa-plus"></i> إضافة مرحلة جديدة</button>
+          </div>
+          <p class="help-text" style="margin-bottom: 20px;">قم ببناء سلسلة من الأسئلة الرومانسية المخصصة لشريكك. يمكنك تغيير ترتيبها بالأسهم.</p>
+          <div id="admin-stages-list" class="stages-list-container"></div>
+        </div>
+
+        <!-- TAB 2: CUSTOM UI TEXTS -->
+        <div id="admin-tab-texts" class="admin-pane">
+          <h3>تخصيص نصوص صفحات التطبيق</h3>
+          <p class="help-text" style="margin-bottom: 20px;">يمكنك التحكم في كل العناوين والأزرار والرسائل التي يراها شريكك.</p>
+          
+          <div class="customizer-accordion">
+            <!-- 1. شاشة القفل -->
+            <div class="accordion-item active">
+              <div class="accordion-header">شاشة قفل اللعبة والمسار <i class="fa-solid fa-chevron-down"></i></div>
+              <div class="accordion-body">
+                <div class="form-group">
+                  <label for="text-lockTitle">العنوان الرئيسي (مثال: مغلق بالحب)</label>
+                  <input type="text" id="text-lockTitle">
+                </div>
+                <div class="form-group">
+                  <label for="text-lockDesc">الوصف والتعليمات</label>
+                  <textarea id="text-lockDesc" rows="2"></textarea>
+                </div>
+                <div class="form-group-row">
+                  <div class="form-group">
+                    <label for="text-lockPlaceholder">placeholder حقل الإدخال</label>
+                    <input type="text" id="text-lockPlaceholder">
+                  </div>
+                  <div class="form-group">
+                    <label for="text-lockBtn">نص زر الفتح</label>
+                    <input type="text" id="text-lockBtn">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="text-lockError">رسالة الخطأ عند إدخال باسوورد خاطئ</label>
+                  <input type="text" id="text-lockError">
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. صفحة اللعبة -->
+            <div class="accordion-item">
+              <div class="accordion-header">صفحة الأسئلة واللعبة <i class="fa-solid fa-chevron-down"></i></div>
+              <div class="accordion-body">
+                <div class="form-group-row">
+                  <div class="form-group">
+                    <label for="text-hintBtn">نص زر عرض التلميح</label>
+                    <input type="text" id="text-hintBtn">
+                  </div>
+                  <div class="form-group">
+                    <label for="text-submitBtn">نص زر التحقق والإرسال</label>
+                    <input type="text" id="text-submitBtn">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="text-hintPrefix">عنوان نافذة التلميح المنبثقة</label>
+                  <input type="text" id="text-hintPrefix">
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. صفحة الاحتفال والهدية -->
+            <div class="accordion-item">
+              <div class="accordion-header">صفحة الاحتفال والنهاية <i class="fa-solid fa-chevron-down"></i></div>
+              <div class="accordion-body">
+                <div class="form-group">
+                  <label for="text-celebrationTitle">العنوان الرئيسي لصفحة الفوز</label>
+                  <input type="text" id="text-celebrationTitle">
+                </div>
+                <div class="form-group">
+                  <label for="text-concludingMsg">نص التهنئة بالنجاح (تظهر عند الفوز)</label>
+                  <input type="text" id="text-concludingMsg">
+                </div>
+                <div class="form-group-row">
+                  <div class="form-group">
+                    <label for="text-celebrationGiftTitle">عنوان بطاقة الرسالة النهائية</label>
+                    <input type="text" id="text-celebrationGiftTitle">
+                  </div>
+                  <div class="form-group" style="display: none;">
+                    <label for="text-envelopeOpenBtn">نص زر فتح المظروف</label>
+                    <input type="text" id="text-envelopeOpenBtn">
+                  </div>
+                  <div class="form-group">
+                    <label for="text-enterWorldBtn">نص زر دخول الرحلة (أيامنا معاً)</label>
+                    <input type="text" id="text-enterWorldBtn">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="text-giftText">محتوى رسالة الحب النهائية (الرسالة التي تفتح تلقائياً)</label>
+                  <textarea id="text-giftText" rows="4" style="width: 100%; padding: 12px; border-radius: var(--border-radius); border: 1px solid var(--border-color); font-family: inherit; font-size: inherit; outline: none; resize: vertical;"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. خطوات الرحلة المتتابعة -->
+            <div class="accordion-item">
+              <div class="accordion-header">أسماء خطوات الرحلة وأزرار التنقل <i class="fa-solid fa-chevron-down"></i></div>
+              <div class="accordion-body">
+                <div class="form-group-row">
+                  <div class="form-group">
+                    <label for="text-step1Title">عنوان الخطوة الأولى (العداد)</label>
+                    <input type="text" id="text-step1Title">
+                  </div>
+                  <div class="form-group">
+                    <label for="text-step1Btn">اسم زر الانتقال للخطوة ٢</label>
+                    <input type="text" id="text-step1Btn">
+                  </div>
+                </div>
+                <div class="form-group-row">
+                  <div class="form-group">
+                    <label for="text-step2Title">عنوان الخطوة الثانية (الأحلام)</label>
+                    <input type="text" id="text-step2Title">
+                  </div>
+                  <div class="form-group">
+                    <label for="text-step2Btn">اسم زر الانتقال للخطوة ٣</label>
+                    <input type="text" id="text-step2Btn">
+                  </div>
+                </div>
+                <div class="form-group-row">
+                  <div class="form-group">
+                    <label for="text-step3Title">عنوان الخطوة الثالثة (المعرض)</label>
+                    <input type="text" id="text-step3Title">
+                  </div>
+                  <div class="form-group">
+                    <label for="text-step3Btn">اسم زر الانتقال للخطوة ٤</label>
+                    <input type="text" id="text-step3Btn">
+                  </div>
+                </div>
+                <div class="form-group-row">
+                  <div class="form-group">
+                    <label for="text-step4Title">عنوان الخطوة الرابعة (المواعيد والعد)</label>
+                    <input type="text" id="text-step4Title">
+                  </div>
+                  <div class="form-group">
+                    <label for="text-step4Btn">اسم زر الانتقال للخطوة ٥</label>
+                    <input type="text" id="text-step4Btn">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="text-step5Title">عنوان الخطوة الخامسة (تاريخ لقاءاتنا)</label>
+                  <input type="text" id="text-step5Title">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: COLORS & PRESETS -->
+        <div id="admin-tab-style" class="admin-pane">
+          <h3>تخصيص الألوان والسمات الثمانية</h3>
+          <p class="help-text" style="margin-bottom: 20px;">اختر سمة جاهزة أو قم بتخصيص كل لون ونصف قطر الحدود وحجم الخطوط.</p>
+          
+          <div class="theme-presets-grid" style="margin-bottom: 25px;">
+            <button class="theme-preset-btn active" data-theme="rose_garden"><i class="fa-solid fa-spa"></i> Rose Garden</button>
+            <button class="theme-preset-btn" data-theme="golden_hour"><i class="fa-solid fa-sun"></i> Golden Hour</button>
+            <button class="theme-preset-btn" data-theme="ocean_of_love"><i class="fa-solid fa-water"></i> Ocean of Love</button>
+            <button class="theme-preset-btn" data-theme="minimal_love"><i class="fa-solid fa-toggle-on"></i> Minimal Love</button>
+            <button class="theme-preset-btn" data-theme="sunset_glow"><i class="fa-solid fa-cloud-sun"></i> Sunset Glow</button>
+            <button class="theme-preset-btn" data-theme="lavender_dream"><i class="fa-solid fa-feather"></i> Lavender Dream</button>
+            <button class="theme-preset-btn" data-theme="midnight_star"><i class="fa-solid fa-star"></i> Midnight Star</button>
+            <button class="theme-preset-btn" data-theme="sweet_strawberry"><i class="fa-solid fa-candy-cane"></i> Sweet Strawberry</button>
+          </div>
+
+          <hr class="divider">
+
+          <!-- Avatars Upload Section -->
+          <h3>صور الأفاتار لخريطة القلوب التفاعلية 🖼️</h3>
+          <p class="help-text" style="margin-bottom: 15px;">ارفع صورة لك وصورة لشريكك ليظهرا كأفاتار دائري يتحرك على مسار القلوب.</p>
+          <div class="form-group-row" style="margin-bottom: 25px;">
+            <div class="form-group">
+              <label for="admin-his-photo">صورة الشاب (His Photo)</label>
+              <input type="file" id="admin-his-photo" accept="image/*">
+              <span id="his-photo-status" class="upload-status">لم يتم رفع صورة</span>
+              <input type="hidden" id="admin-his-photo-url">
+            </div>
+            <div class="form-group">
+              <label for="admin-her-photo">صورة الفتاة (Her Photo)</label>
+              <input type="file" id="admin-her-photo" accept="image/*">
+              <span id="her-photo-status" class="upload-status">لم يتم رفع صورة</span>
+              <input type="hidden" id="admin-her-photo-url">
+            </div>
+          </div>
+
+          <hr class="divider">
+
+          <div class="customizer-accordion">
+            <div class="accordion-item">
+              <div class="accordion-header">الألوان والتدرجات والتأثيرات <i class="fa-solid fa-chevron-down"></i></div>
+              <div class="accordion-body">
+                <div class="form-group">
+                  <label for="style-font-family">نوع الخط</label>
+                  <select id="style-font-family">
+                    <option value="'Cairo', sans-serif">Cairo (عصري ومقروء)</option>
+                    <option value="'Playfair Display', serif">Playfair Display (رومانسي كلاسيكي)</option>
+                    <option value="'Cinzel', serif">Cinzel (ملكي فاخر)</option>
+                    <option value="'Lora', serif">Lora (حكايات دافئة)</option>
+                    <option value="'Pacifico', cursive">Pacifico (خط يدوي مائل)</option>
+                  </select>
+                </div>
+                <div class="form-group-row">
+                  <div class="form-group">
+                    <label>حجم العناوين</label>
+                    <input type="text" id="style-font-size-title" placeholder="2.5rem">
+                  </div>
+                  <div class="form-group">
+                    <label>حجم النصوص</label>
+                    <input type="text" id="style-font-size-body" placeholder="1.05rem">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>خلفية الصفحة (لون أو تدرج CSS)</label>
+                  <input type="text" id="style-bg-color">
+                </div>
+                <div class="form-group">
+                  <label>لون خلفية كارت المحتوى</label>
+                  <input type="text" id="style-card-bg-color">
+                </div>
+                <div class="form-group-row">
+                  <div class="form-group">
+                    <label>لون الأزرار الرئيسي</label>
+                    <input type="color" id="style-btn-color">
+                  </div>
+                  <div class="form-group">
+                    <label>لون زر التمرير (Hover)</label>
+                    <input type="color" id="style-btn-hover-color">
+                  </div>
+                </div>
+                <div class="form-group-row">
+                  <div class="form-group">
+                    <label>لون الحدود</label>
+                    <input type="color" id="style-border-color">
+                  </div>
+                  <div class="form-group">
+                    <label>لون شريط التقدم</label>
+                    <input type="color" id="style-progress-color">
+                  </div>
+                </div>
+                <div class="form-group-row">
+                  <div class="form-group">
+                    <label>نصف قطر الحواف (Border Radius)</label>
+                    <input type="text" id="style-border-radius">
+                  </div>
+                  <div class="form-group">
+                    <label>عرض كارت اللعبة الأقصى</label>
+                    <input type="text" id="style-card-width">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="style-stage-transition">تأثير الانتقال بين المراحل</label>
+                  <select id="style-stage-transition">
+                    <option value="fade">تلاشي (Fade)</option>
+                    <option value="slide">انزلاق أفقي (Slide)</option>
+                    <option value="zoom">تكبير (Zoom)</option>
+                    <option value="flip">قلب الكارت ثلاثي الأبعاد (Flip)</option>
+                    <option value="bounce">ارتداد (Bounce)</option>
+                  </select>
+                </div>
+                <div class="form-group toggle-group">
+                  <label for="style-toggle-particles">تشغيل أنيميشن الجسيمات الخلفية</label>
+                  <input type="checkbox" id="style-toggle-particles" checked>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: MUSIC MANAGEMENT -->
+        <div id="admin-tab-music" class="admin-pane">
+          <h3>قائمة الموسيقى الخلفية المخصصة 🎵</h3>
+          <p class="help-text" style="margin-bottom: 20px;">يمكنك رفع وحذف ملفات الـ MP3 الخاصة بك بالكامل. لن يظهر للاعب إلا الموسيقى التي ترفعها بنفسك هنا.</p>
+          
+          <!-- Track upload form -->
+          <div class="form-group-row" style="background: #fafafa; padding: 16px; border-radius: 12px; border: 1px dashed #ddd; margin-bottom: 25px;">
+            <div class="form-group">
+              <label for="music-track-title">اسم الأغنية / اللحن</label>
+              <input type="text" id="music-track-title" placeholder="أدخل اسم الأغنية...">
+            </div>
+            <div class="form-group">
+              <label for="music-track-file">الملف الصوتي (MP3)</label>
+              <input type="file" id="music-track-file" accept="audio/mp3,audio/*">
+            </div>
+            <div style="display: flex; align-items: flex-end; width: 100%;">
+              <button id="admin-btn-upload-music" class="btn-primary btn-block" style="height: 52px;"><i class="fa-solid fa-cloud-arrow-up"></i> رفع اللحن</button>
+            </div>
+          </div>
+
+          <!-- Active Playlist -->
+          <h4 style="margin-bottom: 12px; font-weight: 700;">ألحان الحب المرفوعة حالياً:</h4>
+          <div id="admin-music-list" class="stages-list-container">
+            <!-- Dynamically loaded songs with delete buttons -->
+          </div>
+        </div>
+
+        <!-- TAB 5: DREAMS BUCKET LIST -->
+        <div id="admin-tab-dreams" class="admin-pane">
+          <div class="stages-header">
+            <h3>قائمة أحلامنا وأمنياتنا المشتركة ☁️</h3>
+            <button id="admin-btn-add-dream" class="btn-small btn-primary"><i class="fa-solid fa-plus"></i> إضافة حلم جديد</button>
+          </div>
+          <p class="help-text" style="margin-bottom: 20px;">تحكم في قائمة الأمنيات وتحديد هل تم إنجاز الحلم أم لا لتظهر مشطوبة بخط خفيف عند اللاعب.</p>
+          
+          <div id="admin-dreams-list" class="stages-list-container">
+            <!-- Dreams list with edit, delete, and check achieved toggles -->
+          </div>
+        </div>
+
+        <!-- TAB 6: MEMORIES TIMELINE -->
+        <div id="admin-tab-memories" class="admin-pane">
+          <div class="stages-header">
+            <h3>شريط ذكرياتنا الدافئة 📸</h3>
+            <button id="admin-btn-add-memory" class="btn-small btn-primary"><i class="fa-solid fa-plus"></i> إضافة ذكرى جديدة</button>
+          </div>
+          <p class="help-text" style="margin-bottom: 20px;">وثقوا الأيام الخالدة بالتاريخ والصورة والقصة الجميلة.</p>
+          
+          <div id="admin-memories-list" class="stages-list-container">
+            <!-- Memories list with thumbnails and delete buttons -->
+          </div>
+        </div>
+
+        <!-- TAB 7: PHOTO GALLERY -->
+        <div id="admin-tab-gallery" class="admin-pane">
+          <div class="stages-header">
+            <h3>معرض صور حبنا 🖼️</h3>
+            <button id="admin-btn-add-photo" class="btn-small btn-primary"><i class="fa-solid fa-cloud-arrow-up"></i> رفع صورة جديدة</button>
+          </div>
+          <p class="help-text" style="margin-bottom: 20px;">ارفع صوركما المشتركة مع كتابة تعليقات دافئة تصف اللحظة.</p>
+          
+          <div id="admin-gallery-list" class="stages-list-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px;">
+            <!-- Photos thumbnail list with delete overlay buttons -->
+          </div>
+        </div>
+
+        <!-- TAB 8: IMPORTANT DATES -->
+        <div id="admin-tab-dates" class="admin-pane">
+          <div class="stages-header">
+            <h3>تواريخ تهمنا ونحتفل بها 📅</h3>
+            <button id="admin-btn-add-date" class="btn-small btn-primary"><i class="fa-solid fa-plus"></i> إضافة موعد مميز</button>
+          </div>
+          <p class="help-text" style="margin-bottom: 20px;">أضف أعياد ميلادكم وتواريخ أول لقاء ليقوم التطبيق بالعد التنازلي التلقائي لها وإرسال رنات تنبيهية قبلها بأسبوع.</p>
+          
+          <div id="admin-dates-list" class="stages-list-container">
+            <!-- Dates list with countdown labels and delete buttons -->
+          </div>
+        </div>
+
+        <!-- TAB 9: SHARE & STATISTICS -->
+        <div id="admin-tab-share" class="admin-pane">
+          <h3>رابط اللعبة وإحصائيات الزيارات 📈</h3>
+          <p class="help-text" style="margin-bottom: 20px;">تابع تفاعل شريكك مع الرحلة وقم بجدولة المواعيد المتاحة للرابط.</p>
+
+          <div class="stats-panel-grid" style="margin-bottom: 25px;">
+            <div class="stat-card">
+              <span class="stat-number" id="stats-views">0</span>
+              <span class="stat-label">عدد مرات فتح اللعبة</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number" id="stats-completions">0</span>
+              <span class="stat-label">عدد مرات حل اللعبة بالكامل</span>
+            </div>
+          </div>
+
+          <hr class="divider">
+
+          <h4 style="margin-bottom: 12px; font-weight: 700;">صلاحية وجدولة الرابط (اختياري)</h4>
+          <div class="form-group-row" style="margin-bottom: 25px;">
+            <div class="form-group">
+              <label for="admin-start-date">تاريخ بداية إتاحة اللعبة</label>
+              <input type="datetime-local" id="admin-start-date">
+            </div>
+            <div class="form-group">
+              <label for="admin-expiry-date">تاريخ انتهاء صلاحية اللعبة</label>
+              <input type="datetime-local" id="admin-expiry-date">
+            </div>
+          </div>
+
+          <hr class="divider">
+
+          <h4 style="margin-bottom: 12px; font-weight: 700;">مشاركة اللعبة مع شريكك 🔗</h4>
+          <div id="admin-share-link-wrapper" class="hidden">
+            <div class="share-link-container">
+              <input type="text" id="admin-share-link" readonly value="" style="direction: ltr; text-align: left;">
+              <button id="admin-btn-copy-link" title="نسخ الرابط"><i class="fa-solid fa-copy"></i></button>
+            </div>
+            <div class="share-actions-row" style="margin-top: 15px;">
+              <button id="admin-btn-whatsapp-share" class="btn-whatsapp"><i class="fa-brands fa-whatsapp"></i> مشاركة عبر واتساب 💬</button>
+            </div>
+          </div>
+          <div id="admin-save-first-message" class="info-alert">
+            يرجى الضغط على زر "حفظ كافة التعديلات" بالأعلى أولاً لحفظ إعدادات اللعبة وإنشاء رابط المشاركة الفريد لشريكك.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODALS FOR ADDING RECORDS                  -->
+  <!-- ========================================== -->
+
+  <!-- Modal 1: Stage Editor -->
+  <div id="modal-stage-editor" class="modal hidden">
+    <div class="modal-content scale-in" style="max-width: 600px;">
+      <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+      <h2 class="modal-title" id="stage-editor-title">تعديل مرحلة اللغز</h2>
+      <form id="form-stage-editor">
+        <input type="hidden" id="stage-editor-index" value="">
+        
+        <div class="form-group">
+          <label for="stage-edit-title">عنوان المرحلة</label>
+          <input type="text" id="stage-edit-title" required placeholder="مثال: أول موعد، ذكريات الشتاء...">
+        </div>
+
+        <div class="form-group">
+          <label for="stage-edit-message">الرسالة الرومانسية المرافقة (تظهر للاعب)</label>
+          <textarea id="stage-edit-message" rows="3" required placeholder="اكتب ما يصف هذه الذكرى الجميلة أو الموقف المميز..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="stage-edit-media">ارفاق صورة أو فيديو لهذه المرحلة (اختياري)</label>
+          <input type="file" id="stage-edit-media" accept="image/*,video/*">
+          <span id="stage-media-upload-status" class="upload-status">لم يتم تحديد ملف جديد</span>
+          <input type="hidden" id="stage-edit-media-url">
+        </div>
+
+        <div class="form-group-row">
+          <div class="form-group">
+            <label for="stage-edit-type">نوع الإجابة المطلوبة</label>
+            <select id="stage-edit-type">
+              <option value="text">إدخال نصي (كلمات)</option>
+              <option value="multiple_choice">اختيار من متعدد</option>
+              <option value="number">إدخال رقمي (أرقام)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="stage-edit-correct">الإجابة الصحيحة</label>
+            <input type="text" id="stage-edit-correct" required placeholder="أدخل الإجابة الدقيقة للحل">
+          </div>
+        </div>
+
+        <!-- MCQ Options -->
+        <div id="stage-edit-options-wrapper" class="form-group hidden">
+          <label for="stage-edit-choices">خيارات الإجابة (افصل بينها بفواصل , )</label>
+          <input type="text" id="stage-edit-choices" placeholder="خيار ١, خيار ٢, خيار ٣, خيار ٤">
+        </div>
+
+        <div class="form-group">
+          <label for="stage-edit-question">سؤال التحدي</label>
+          <input type="text" id="stage-edit-question" required placeholder="مثال: ما هو اسم المقهى الذي جلسنا فيه؟">
+        </div>
+
+        <div class="form-group">
+          <label for="stage-edit-hint">تلميح لمساعدة الشريك (اختياري)</label>
+          <input type="text" id="stage-edit-hint" placeholder="مثال: تذكر لون المعطف الذي ارتديته...">
+        </div>
+
+        <div class="form-group-row">
+          <div class="form-group">
+            <label for="stage-edit-success">رسالة النجاح عند الإجابة الصحيحة</label>
+            <input type="text" id="stage-edit-success" placeholder="إجابة صحيحة وممتازة! 💖">
+          </div>
+          <div class="form-group">
+            <label for="stage-edit-fail">رسالة الخطأ عند الإجابة الخاطئة</label>
+            <input type="text" id="stage-edit-fail" placeholder="إجابة خاطئة، فكر مجدداً يا حب! 💕">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary btn-block">حفظ إعدادات المرحلة <i class="fa-solid fa-check"></i></button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Add Dream -->
+  <div id="modal-add-dream" class="modal hidden">
+    <div class="modal-content scale-in">
+      <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+      <h2 class="modal-title" id="dream-modal-title">إضافة حلم جديد 💫</h2>
+      <form id="form-add-dream">
+        <input type="hidden" id="dream-edit-id" value="">
+        <div class="form-group">
+          <label for="dream-title">الحلم أو الهدف المشترك</label>
+          <input type="text" id="dream-title" required placeholder="مثال: السفر لباريس معاً، السكن ببيت أحلامنا...">
+        </div>
+        <div class="form-group">
+          <label for="dream-desc">تفاصيل الحلم (اختياري)</label>
+          <textarea id="dream-desc" rows="3" placeholder="اكتب كيف يمكننا تحقيق هذا الحلم يداً بيد..."></textarea>
+        </div>
+        <button type="submit" class="btn-primary btn-block">إضافة للقائمة <i class="fa-solid fa-cloud"></i></button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Add Memory -->
+  <div id="modal-add-memory" class="modal hidden">
+    <div class="modal-content scale-in">
+      <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+      <h2 class="modal-title">توثيق ذكرى جميلة ✍️</h2>
+      <form id="form-add-memory">
+        <div class="form-group">
+          <label for="memory-title">عنوان الذكرى</label>
+          <input type="text" id="memory-title" required placeholder="مثال: نزهتنا تحت المطر، يوم التخرج...">
+        </div>
+        <div class="form-group-row">
+          <div class="form-group">
+            <label for="memory-date">تاريخ الذكرى</label>
+            <input type="date" id="memory-date" required>
+          </div>
+          <div class="form-group">
+            <label for="memory-photo">رفع صورة الذكرى (اختياري)</label>
+            <input type="file" id="memory-photo" accept="image/*">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="memory-desc">تفاصيل ولحظات الذكرى</label>
+          <textarea id="memory-desc" rows="4" required placeholder="اكتب بالتفصيل ما الذي جعل هذا الموعد لا ينسى..."></textarea>
+        </div>
+        <button type="submit" class="btn-primary btn-block">حفظ بشريط الوقت 💖</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 4: Upload Photo -->
+  <div id="modal-add-photo" class="modal hidden">
+    <div class="modal-content scale-in">
+      <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+      <h2 class="modal-title">إضافة صورة للمعرض 📷</h2>
+      <form id="form-add-photo">
+        <div class="form-group">
+          <label for="gallery-file">ملف الصورة</label>
+          <input type="file" id="gallery-file" accept="image/*" required>
+        </div>
+        <div class="form-group">
+          <label for="gallery-caption">الوصف التعليقي المكتوب</label>
+          <input type="text" id="gallery-caption" placeholder="ضحكتنا وقت الغروب، في الحديقة المائية...">
+        </div>
+        <button type="submit" class="btn-primary btn-block">رفع الصورة للمعرض 🖼️</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 5: Add Important Date -->
+  <div id="modal-add-date" class="modal hidden">
+    <div class="modal-content scale-in">
+      <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+      <h2 class="modal-title">تخليد موعد مميز 📌</h2>
+      <form id="form-add-date">
+        <div class="form-group">
+          <label for="date-title">اسم المناسبة</label>
+          <input type="text" id="date-title" required placeholder="مثال: ذكرى زواجنا، تاريخ تعارفنا الأول...">
+        </div>
+        <div class="form-group">
+          <label for="date-value">التاريخ</label>
+          <input type="date" id="date-value" required>
+        </div>
+        <div class="form-group toggle-group" style="margin-top: 15px; margin-bottom: 20px;">
+          <label for="date-is-milestone">ذكرى مضت (احسب الوقت المنقضي منذ حدوثها)</label>
+          <input type="checkbox" id="date-is-milestone">
+        </div>
+        <button type="submit" class="btn-primary btn-block">تثبيت التاريخ 📅</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Application Logic Modules for Admin -->
+  <script type="module" src="/admin/admin.js"></script>
+</body>
+</html>

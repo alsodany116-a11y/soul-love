@@ -1,0 +1,8 @@
+# Temporary and configuration files
+.gemini/
+.agents/
+.vscode/
+.idea/
+*.log
+tmp/
+temp/
