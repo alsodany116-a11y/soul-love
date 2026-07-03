@@ -515,7 +515,7 @@ export async function setupCelebrationScreen(gameId) {
 
     // Dashboard navigation button click
     document.getElementById('celebration-btn-enter-dashboard').onclick = () => {
-      window.location.hash = `#journey/${currentGame.coupleSpaceId}`;
+      window.location.hash = `#journey/${getCurrentTenantSlug()}`;
     };
 
   } catch (err) {
