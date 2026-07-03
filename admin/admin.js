@@ -432,6 +432,15 @@ async function revealAdminPanel(isCustomerMode = false) {
   document.getElementById('admin-screen-dashboard').classList.add('hidden');
   document.getElementById('admin-panel-container').classList.remove('hidden');
 
+  const backBtn = document.getElementById('admin-btn-back-dashboard');
+  const logoutBtn = document.getElementById('admin-btn-logout');
+
+  if (isCustomerMode) {
+    backBtn.style.display = 'none'; // Hide back to master dashboard button
+  } else {
+    backBtn.style.display = 'inline-flex';
+  }
+
   showToast("تم فتح محرر مساحة الحب بنجاح ✨");
   setupTabControls();
   setupAccordionControls();
@@ -449,11 +458,7 @@ async function revealAdminPanel(isCustomerMode = false) {
 
   setupActionListeners();
 
-  const backBtn = document.getElementById('admin-btn-back-dashboard');
-  const logoutBtn = document.getElementById('admin-btn-logout');
-
   if (isCustomerMode) {
-    backBtn.style.display = 'none'; // Hide back to master dashboard button
     logoutBtn.onclick = () => {
       if (confirm("هل تريد تسجيل الخروج؟")) {
         sessionStorage.removeItem(`unlocked_admin_${currentSpaceId}`);
@@ -507,14 +512,58 @@ function applyThemeTiers() {
  * Setup Sidebar tabs toggle.
  */
 function setupTabControls() {
+  const dropdownBtn = document.getElementById('mobile-tabs-dropdown-btn');
+  const dropdownMenu = document.getElementById('mobile-tabs-menu');
+
+  const switchTab = (tabId) => {
+    document.querySelectorAll('.admin-pane').forEach(p => p.classList.remove('active'));
+    const targetPane = document.getElementById(tabId);
+    if (targetPane) targetPane.classList.add('active');
+
+    document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+      if (btn.getAttribute('data-admin-tab') === tabId) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    document.querySelectorAll('.mobile-menu-item').forEach(item => {
+      if (item.getAttribute('data-admin-tab') === tabId) {
+        item.classList.add('active');
+        if (dropdownBtn) {
+          dropdownBtn.querySelector('span').innerHTML = item.innerHTML;
+        }
+      } else {
+        item.classList.remove('active');
+      }
+    });
+  };
+
   document.querySelectorAll('.admin-tab-btn').forEach(btn => {
     btn.onclick = () => {
-      document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.admin-pane').forEach(p => p.classList.remove('active'));
+      const tabId = btn.getAttribute('data-admin-tab');
+      switchTab(tabId);
+    };
+  });
 
-      btn.classList.add('active');
-      const paneId = btn.getAttribute('data-admin-tab');
-      document.getElementById(paneId).classList.add('active');
+  if (dropdownBtn && dropdownMenu) {
+    dropdownBtn.onclick = (e) => {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle('hidden');
+    };
+
+    document.addEventListener('click', () => {
+      dropdownMenu.classList.add('hidden');
+    });
+  }
+
+  document.querySelectorAll('.mobile-menu-item').forEach(item => {
+    item.onclick = (e) => {
+      e.stopPropagation();
+      const tabId = item.getAttribute('data-admin-tab');
+      switchTab(tabId);
+      if (dropdownMenu) dropdownMenu.classList.add('hidden');
     };
   });
 }
