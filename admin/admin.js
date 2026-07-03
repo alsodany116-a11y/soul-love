@@ -28,7 +28,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   initFlatpickr();
 
   const urlParams = new URLSearchParams(window.location.search);
-  const spaceSlug = urlParams.get('space');
+  let spaceSlug = urlParams.get('space');
+  if (!spaceSlug && window.location.hash) {
+    spaceSlug = window.location.hash.replace('#', '').replace('/', '').trim();
+  }
 
   if (spaceSlug) {
     // Customer Mode (Dynamic database switching)
