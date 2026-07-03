@@ -2,6 +2,7 @@
 import { getSupabase, setTenantBySlug, getCurrentTenantSlug } from '../config.js';
 import { 
   createCoupleSpace, verifySpaceAdminPassword, isSpaceAdminUnlocked, fetchSpaceUI, updateSpaceUI, updateSpacePhotos,
+  updateSpacePasswords,
   fetchMusicTracks, saveMusicTrack, deleteMusicTrack,
   saveGame, fetchGamesBySpace, uploadMedia,
   fetchDreams, saveDream, toggleDreamAchieved, deleteDream,
@@ -436,6 +437,10 @@ async function loadSpaceUIConfigs() {
     // Set avatar upload status labels
     if (hisPhotoUrl) document.getElementById('his-photo-status').textContent = "تم رفع الصورة بنجاح ✅";
     if (herPhotoUrl) document.getElementById('her-photo-status').textContent = "تم رفع الصورة بنجاح ✅";
+
+    // Set Passwords
+    document.getElementById('admin-player-password').value = data.passwordPlain || "love";
+    document.getElementById('admin-space-password').value = data.adminPasswordPlain || "";
 
   } catch (err) {
     console.error("Error loading UI texts:", err);
@@ -1201,6 +1206,26 @@ function setupActionListeners() {
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
+  // Passwords Form Submit
+  document.getElementById('form-update-passwords').onsubmit = async (e) => {
+    e.preventDefault();
+    const playerPassword = document.getElementById('admin-player-password').value.trim();
+    const adminPassword = document.getElementById('admin-space-password').value.trim();
+
+    if (playerPassword.length < 4 || adminPassword.length < 4) {
+      showToast("يجب أن تكون كلمة المرور 4 أحرف أو أكثر ⚠️");
+      return;
+    }
+
+    showToast("جاري تحديث كلمات المرور... 🔑");
+    try {
+      await updateSpacePasswords(currentSpaceId, playerPassword, adminPassword);
+      showToast("تم تحديث كلمات المرور بنجاح! 🔐💖");
+    } catch (err) {
+      console.error(err);
+      showToast("حدث خطأ أثناء تحديث كلمات المرور: " + err.message);
+    }
+  };
 }
 
 function updateShareLinkUI() {

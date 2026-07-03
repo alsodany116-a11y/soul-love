@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS couple_spaces (
     his_photo_url TEXT,
     her_photo_url TEXT,
     custom_ui_texts JSONB DEFAULT '{}'::jsonb NOT NULL,
+    password_plain TEXT,
+    admin_password_plain TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

@@ -224,7 +224,7 @@ export async function fetchSpaceUI(spaceId) {
 
   let { data, error } = await supabase
     .from('couple_spaces')
-    .select('custom_ui_texts, his_photo_url, her_photo_url')
+    .select('custom_ui_texts, his_photo_url, her_photo_url, password_plain, admin_password_plain')
     .eq('id', spaceId)
     .maybeSingle();
 
@@ -241,9 +241,11 @@ export async function fetchSpaceUI(spaceId) {
         id: spaceId,
         password_hash: await hashPassword("love"), // Default play password
         admin_password_hash: "NOT_USED",
-        custom_ui_texts: DEFAULT_UI_TEXTS
+        custom_ui_texts: DEFAULT_UI_TEXTS,
+        password_plain: "love",
+        admin_password_plain: ""
       }])
-      .select('custom_ui_texts, his_photo_url, her_photo_url')
+      .select('custom_ui_texts, his_photo_url, her_photo_url, password_plain, admin_password_plain')
       .single();
 
     if (insertError) {
@@ -256,7 +258,9 @@ export async function fetchSpaceUI(spaceId) {
   return {
     uiTexts: { ...DEFAULT_UI_TEXTS, ...data.custom_ui_texts },
     hisPhotoUrl: data.his_photo_url,
-    herPhotoUrl: data.her_photo_url
+    herPhotoUrl: data.her_photo_url,
+    passwordPlain: data.password_plain || "love",
+    adminPasswordPlain: data.admin_password_plain || ""
   };
 }
 
@@ -275,6 +279,49 @@ export async function updateSpaceUI(spaceId, uiTexts) {
   if (error) {
     console.error("Error updating space UI:", error);
     throw error;
+  }
+}
+
+/**
+ * Updates passwords for the player and the admin in the tenant database and master registry.
+ */
+export async function updateSpacePasswords(spaceId, playerPassword, adminPassword) {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error("Supabase is not initialized.");
+
+  // Hash passwords
+  const playerHash = await hashPassword(playerPassword);
+  const adminHash = await hashPassword(adminPassword);
+
+  // 1. Update tenant database couple_spaces
+  const { error: tenantError } = await supabase
+    .from('couple_spaces')
+    .update({
+      password_hash: playerHash,
+      password_plain: playerPassword,
+      admin_password_plain: adminPassword
+    })
+    .eq('id', spaceId);
+
+  if (tenantError) {
+    console.error("Error updating tenant passwords:", tenantError);
+    throw tenantError;
+  }
+
+  // 2. Update master database spaces_registry so the login checks match the new hash!
+  const master = getMasterClient();
+  if (master) {
+    const { error: masterError } = await master
+      .from('spaces_registry')
+      .update({
+        admin_password_hash: adminHash
+      })
+      .eq('id', spaceId);
+
+    if (masterError) {
+      console.error("Error updating master registry password:", masterError);
+      throw masterError;
+    }
   }
 }
 
