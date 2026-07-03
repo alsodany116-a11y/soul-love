@@ -5,6 +5,7 @@ import {
 import { initPlayer, setupCelebrationScreen } from './player.js';
 import { initJourney } from './journey.js';
 import { applyThemeStyles } from './themes.js';
+import { setTenantBySlug } from './config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // Bootstrap Router on hash changes
@@ -45,15 +46,18 @@ async function router() {
       }
 
       try {
-        const game = await fetchGame(param);
+        const tenantDetails = await setTenantBySlug(param);
+        const spaceId = tenantDetails.id;
+        
+        const game = await fetchGame(param); // Loads the active game from tenant db
         if (!game) {
-          showToast("عذراً، لم نجد هذه اللعبة!");
+          showToast("عذراً، لم يقم الشريك بإعداد الألغاز بعد!");
           window.location.hash = '#lock/generic/main';
           break;
         }
 
         // Guard Check: Space must be unlocked to play
-        if (isSpaceUnlocked(game.coupleSpaceId)) {
+        if (isSpaceUnlocked(spaceId)) {
           showScreen('screen-player');
           initPlayer(param);
         } else {
@@ -71,8 +75,15 @@ async function router() {
         window.location.hash = '#lock/generic/main';
         break;
       }
-      showScreen('screen-celebration');
-      setupCelebrationScreen(param);
+      try {
+        await setTenantBySlug(param);
+        showScreen('screen-celebration');
+        setupCelebrationScreen(param);
+      } catch (err) {
+        console.error(err);
+        showToast("خطأ في تحميل صفحة الاحتفال.");
+        window.location.hash = '#lock/generic/main';
+      }
       break;
 
     case '#journey':
@@ -81,17 +92,26 @@ async function router() {
         break;
       }
 
-      // Guard Lock Check
-      if (isSpaceUnlocked(param)) {
-        showScreen('screen-journey');
-        initJourney(param);
-      } else {
-        window.location.hash = `#lock/journey/${param}`;
+      try {
+        const tenantDetails = await setTenantBySlug(param);
+        const spaceId = tenantDetails.id;
+
+        // Guard Lock Check
+        if (isSpaceUnlocked(spaceId)) {
+          showScreen('screen-journey');
+          initJourney(spaceId);
+        } else {
+          window.location.hash = `#lock/journey/${param}`;
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("خطأ في تحميل مسار الذكريات.");
+        window.location.hash = '#lock/generic/main';
       }
       break;
 
     case '#lock':
-      // Lock route parameters: #lock/<action>/<target_id>
+      // Lock route parameters: #lock/<action>/<slug>
       if (!param || !subParam) {
         window.location.hash = '#lock/generic/main';
         break;
@@ -133,27 +153,19 @@ async function initLockScreen(targetAction, targetId) {
   };
 
   try {
-    if (targetAction === 'play') {
-      const game = await fetchGame(targetId);
-      if (game) {
-        spaceId = game.coupleSpaceId;
-        const data = await fetchSpaceUI(spaceId);
-        customTexts = data.uiTexts;
-        // Instantly apply the selected theme styles & variables to the lock screen
-        applyThemeStyles(game.theme, document.documentElement, game.customization);
-      } else {
-        showToast("عذراً، لم نجد هذه اللعبة!");
-        window.location.hash = '#lock/generic/main';
-        return;
-      }
-    } else if (targetAction === 'journey') {
-      spaceId = targetId;
+    if (targetAction === 'play' || targetAction === 'journey') {
+      const tenantDetails = await setTenantBySlug(targetId);
+      spaceId = tenantDetails.id;
+      
       const data = await fetchSpaceUI(spaceId);
       customTexts = data.uiTexts;
       
-      const games = await fetchGamesBySpace(spaceId);
-      if (games && games.length > 0) {
-        applyThemeStyles(games[0].theme, document.documentElement, games[0].customization);
+      const game = await fetchGame(targetId);
+      if (game) {
+        // Instantly apply the selected theme styles & variables to the lock screen
+        applyThemeStyles(game.theme, document.documentElement, game.customization);
+      } else {
+        applyThemeStyles('rose_garden', document.documentElement, {});
       }
     } else if (targetAction === 'generic') {
       // Default placeholder style until matching password finds custom theme

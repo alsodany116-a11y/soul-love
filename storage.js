@@ -1,5 +1,5 @@
 // Love Hunt - Storage & Backend Services Module
-import { getSupabase } from './config.js';
+import { getSupabase, getMasterClient, getCurrentTenantDetails } from './config.js';
 
 // Default UI Texts in Arabic
 export const DEFAULT_UI_TEXTS = {
@@ -87,27 +87,27 @@ export async function uploadMedia(file) {
    ============================================================================ */
 
 /**
- * Creates a new Couple Space (Love Space) with hashed player & admin passwords.
+ * Creates a new Couple Space (Love Space) in the master registry.
  */
-export async function createCoupleSpace(password, adminPassword) {
-  const supabase = getSupabase();
-  if (!supabase) throw new Error("Supabase is not initialized.");
+export async function createCoupleSpace(slug, adminPassword, tenantSupabaseUrl, tenantSupabaseAnonKey) {
+  const master = getMasterClient();
+  if (!master) throw new Error("Master database is not initialized.");
 
-  const passwordHash = await hashPassword(password);
   const adminPasswordHash = await hashPassword(adminPassword);
   
-  const { data, error } = await supabase
-    .from('couple_spaces')
+  const { data, error } = await master
+    .from('spaces_registry')
     .insert([{ 
-      password_hash: passwordHash, 
+      slug: slug.toLowerCase().trim(),
       admin_password_hash: adminPasswordHash,
-      custom_ui_texts: DEFAULT_UI_TEXTS
+      tenant_supabase_url: tenantSupabaseUrl.trim(),
+      tenant_supabase_anon_key: tenantSupabaseAnonKey.trim()
     }])
     .select('id')
     .single();
 
   if (error) {
-    console.error("Error creating couple space:", error);
+    console.error("Error creating couple space in registry:", error);
     throw error;
   }
 
@@ -174,25 +174,34 @@ export async function findSpaceByPassword(password) {
  * Checks if the admin password is correct.
  */
 export async function verifySpaceAdminPassword(spaceId, password) {
-  const supabase = getSupabase();
-  if (!supabase) throw new Error("Supabase is not initialized.");
-
-  const { data, error } = await supabase
-    .from('couple_spaces')
-    .select('admin_password_hash')
-    .eq('id', spaceId)
-    .single();
-
-  if (error || !data) {
-    console.error("Error fetching space admin details:", error);
+  const details = getCurrentTenantDetails();
+  if (!details) {
+    console.error("No active tenant loaded for verification.");
     return false;
   }
 
   const computedHash = await hashPassword(password);
-  const isMatch = computedHash === data.admin_password_hash;
+  const isMatch = computedHash === details.adminPasswordHash;
   
   if (isMatch) {
     sessionStorage.setItem(`unlocked_admin_${spaceId}`, 'true');
+
+    // Self-initialize the tenant's own database if the couple_spaces row is missing
+    try {
+      const tenantDb = getSupabase();
+      const { data } = await tenantDb.from('couple_spaces').select('id').eq('id', spaceId).maybeSingle();
+      if (!data) {
+        console.log("Self-initializing tenant database for space:", spaceId);
+        await tenantDb.from('couple_spaces').insert([{
+          id: spaceId,
+          password_hash: await hashPassword("love"), // Default play password
+          admin_password_hash: "NOT_USED",
+          custom_ui_texts: DEFAULT_UI_TEXTS
+        }]);
+      }
+    } catch (err) {
+      console.error("Auto-initialization of tenant db failed:", err);
+    }
   }
 
   return isMatch;
@@ -359,20 +368,28 @@ export async function saveGame(gameData) {
   return data.id;
 }
 
-export async function fetchGame(gameId) {
+export async function fetchGame(gameIdOrSlug) {
   const supabase = getSupabase();
   if (!supabase) throw new Error("Supabase is not initialized.");
 
-  const { data, error } = await supabase
-    .from('games')
-    .select('*')
-    .eq('id', gameId)
-    .single();
+  let query;
+  // Check if the argument is a valid UUID
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(gameIdOrSlug);
 
+  if (isUuid) {
+    query = supabase.from('games').select('*').eq('id', gameIdOrSlug).single();
+  } else {
+    // If it's a slug, load the first game row in the tenant database
+    query = supabase.from('games').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle();
+  }
+
+  const { data, error } = await query;
   if (error) {
     console.error("Error fetching game:", error);
     throw error;
   }
+
+  if (!data) return null;
 
   return {
     id: data.id,
@@ -707,13 +724,13 @@ const MASTER_UUID = "00000000-0000-0000-0000-000000000000";
 const DEFAULT_MASTER_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"; // SHA-256 hash of 'admin123'
 
 export async function verifyMasterPassword(password) {
-  const supabase = getSupabase();
-  if (!supabase) throw new Error("Supabase not initialized.");
+  const master = getMasterClient();
+  if (!master) throw new Error("Master database not initialized.");
 
   const hashed = await hashPassword(password);
 
   // Try to fetch the special row
-  let { data, error } = await supabase
+  let { data, error } = await master
     .from('couple_spaces')
     .select('*')
     .eq('id', MASTER_UUID)
@@ -726,7 +743,7 @@ export async function verifyMasterPassword(password) {
 
   if (!data) {
     // Create default master config row
-    const { data: newRow, error: insertError } = await supabase
+    const { data: newRow, error: insertError } = await master
       .from('couple_spaces')
       .insert([{
         id: MASTER_UUID,
@@ -747,12 +764,12 @@ export async function verifyMasterPassword(password) {
 }
 
 export async function updateMasterPassword(newPassword) {
-  const supabase = getSupabase();
-  if (!supabase) throw new Error("Supabase not initialized.");
+  const master = getMasterClient();
+  if (!master) throw new Error("Master database not initialized.");
 
   const hashed = await hashPassword(newPassword);
 
-  const { error } = await supabase
+  const { error } = await master
     .from('couple_spaces')
     .update({ admin_password_hash: hashed })
     .eq('id', MASTER_UUID);
@@ -762,37 +779,36 @@ export async function updateMasterPassword(newPassword) {
 }
 
 export async function fetchAllSpaces() {
-  const supabase = getSupabase();
-  if (!supabase) throw new Error("Supabase not initialized.");
+  const master = getMasterClient();
+  if (!master) throw new Error("Master database not initialized.");
 
-  const { data, error } = await supabase
-    .from('couple_spaces')
-    .select('id, created_at, his_photo_url, her_photo_url, games(id, theme, views, completions)')
-    .neq('id', MASTER_UUID)
+  const { data, error } = await master
+    .from('spaces_registry')
+    .select('*')
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
-  return data.map(s => {
-    const game = s.games && s.games.length > 0 ? s.games[0] : null;
-    return {
-      id: s.id,
-      createdAt: s.created_at,
-      hisPhotoUrl: s.his_photo_url,
-      herPhotoUrl: s.her_photo_url,
-      gameId: game ? game.id : null,
-      theme: game ? game.theme : 'rose_garden',
-      views: game ? game.views : 0,
-      completions: game ? game.completions : 0
-    };
-  });
+  if (error) {
+    console.error("Error fetching spaces registry:", error);
+    throw error;
+  }
+
+  return data.map(s => ({
+    id: s.id,
+    slug: s.slug,
+    supabaseUrl: s.tenant_supabase_url,
+    createdAt: s.created_at,
+    theme: 'rose_garden',
+    views: 0,
+    completions: 0
+  }));
 }
 
 export async function deleteCoupleSpace(spaceId) {
-  const supabase = getSupabase();
-  if (!supabase) throw new Error("Supabase not initialized.");
+  const master = getMasterClient();
+  if (!master) throw new Error("Master database not initialized.");
 
-  const { error } = await supabase
-    .from('couple_spaces')
+  const { error } = await master
+    .from('spaces_registry')
     .delete()
     .eq('id', spaceId);
 

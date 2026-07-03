@@ -20,7 +20,7 @@
   --color-text-body: #444444;
   --color-text-button: #ffffff;
   
-  --bg-color: #fafafa;
+  --bg-color: #ffeef0;
   --card-bg-color: #ffffff;
   --button-color: #111111;
   --button-hover-color: #333333;
@@ -52,7 +52,7 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
-  transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
+  transition: color var(--transition-speed) ease;
   text-align: right;
 }
 
@@ -1740,4 +1740,127 @@ input:focus, select:focus, textarea:focus {
 .btn-copy-space-id:active {
   transform: scale(0.85);
   color: var(--color-success) !important;
+}
+
+/* Progress Line (الخط) styling for gameplay screen */
+.stage-progress-bar-container {
+  width: 100%;
+  height: 6px;
+  background-color: var(--input-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 12px;
+  margin-bottom: 20px;
+}
+
+.stage-progress-bar {
+  height: 100%;
+  background-color: var(--progress-bar-color);
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Modern pill styling for submit button and text inputs */
+.player-btn-submit-pill {
+  border-radius: 50px !important;
+  font-size: 1.1rem !important;
+  padding: 14px 32px !important;
+  box-shadow: 0 8px 25px var(--overlay-color) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.player-btn-submit-pill:hover {
+  transform: translateY(-3px) scale(1.02) !important;
+  box-shadow: 0 12px 30px var(--overlay-color) !important;
+}
+
+/* Pill-shaped clean text inputs in player card */
+.player-input-field {
+  width: 100%;
+  background-color: #ffffff !important;
+  border: 2px solid var(--border-color) !important;
+  border-radius: 50px !important;
+  padding: 14px 24px !important;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-body) !important;
+  outline: none !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02) !important;
+  transition: all 0.3s ease !important;
+  text-align: center !important;
+}
+
+.player-input-field:focus {
+  border-color: var(--progress-bar-color) !important;
+  box-shadow: 0 4px 15px var(--overlay-color) !important;
+}
+
+/* Redesign stage question inner card to match screenshot */
+.stage-question-card {
+  background: var(--overlay-color) !important;
+  padding: 24px !important;
+  border-radius: 20px !important;
+  border: 1px dashed var(--border-color) !important;
+}
+
+.question-title {
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  color: var(--color-text-title) !important;
+  opacity: 0.65;
+  margin-bottom: 8px !important;
+}
+
+.question-text {
+  font-size: 1.2rem !important;
+  font-weight: 800 !important;
+  color: var(--color-text-title) !important;
+  margin-bottom: 20px !important;
+  line-height: 1.5 !important;
+}
+
+/* Redesign lock screen to match the first picture mockup */
+.lock-icon {
+  font-size: 4rem !important;
+  color: var(--progress-bar-color) !important; /* Coral/Red matching first picture */
+  margin-bottom: 20px !important;
+}
+
+.input-password-wrapper input {
+  border-radius: 50px !important;
+  padding: 14px 20px !important;
+  text-align: center !important;
+  border: 2px solid var(--border-color) !important;
+  background-color: #ffffff !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.01) !important;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+}
+
+.input-password-wrapper input:focus {
+  border-color: var(--progress-bar-color) !important;
+  box-shadow: 0 0 0 4px var(--overlay-color) !important;
+}
+
+#screen-lock .btn-block {
+  border-radius: 50px !important;
+  padding: 14px 28px !important;
+  font-weight: 800 !important;
+  background-color: var(--progress-bar-color) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px var(--overlay-color) !important;
+  transition: all 0.3s ease !important;
+}
+
+#screen-lock .btn-block:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 25px var(--overlay-color) !important;
+}
+
+#screen-lock .lock-box {
+  border-radius: 30px !important;
+  padding: 40px 30px !important;
 }

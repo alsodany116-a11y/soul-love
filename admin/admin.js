@@ -1,5 +1,5 @@
 // Love Hunt - Admin Panel Controller Module
-import { getSupabase } from '../config.js';
+import { getSupabase, setTenantBySlug, getCurrentTenantSlug } from '../config.js';
 import { 
   createCoupleSpace, verifySpaceAdminPassword, isSpaceAdminUnlocked, fetchSpaceUI, updateSpaceUI, updateSpacePhotos,
   fetchMusicTracks, saveMusicTrack, deleteMusicTrack,
@@ -22,24 +22,91 @@ let customizationOverrides = {};
 let hisPhotoUrl = "";
 let herPhotoUrl = "";
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   setupPasswordToggles();
 
-  const isMasterUnlocked = sessionStorage.getItem('unlocked_master') === 'true';
+  const urlParams = new URLSearchParams(window.location.search);
+  const spaceSlug = urlParams.get('space');
 
-  if (isMasterUnlocked) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const spaceId = urlParams.get('spaceId');
-    if (spaceId) {
-      currentSpaceId = spaceId;
-      revealAdminPanel();
-    } else {
-      revealDashboard();
+  if (spaceSlug) {
+    // Customer Mode (Dynamic database switching)
+    try {
+      showToast("جاري ربط قاعدة بيانات المساحة... 🔐");
+      const tenantDetails = await setTenantBySlug(spaceSlug);
+      currentSpaceId = tenantDetails.id;
+      
+      // Check if unlocked
+      if (isSpaceAdminUnlocked(currentSpaceId)) {
+        await revealAdminPanel(true); // Customer mode
+      } else {
+        revealSpaceLogin(spaceSlug);
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "فشل ربط قاعدة بيانات المساحة.");
+      window.location.href = './'; // Redirect to master dashboard login
     }
   } else {
-    revealMasterLogin();
+    // Master Admin Mode
+    const isMasterUnlocked = sessionStorage.getItem('unlocked_master') === 'true';
+    if (isMasterUnlocked) {
+      const spaceId = urlParams.get('spaceId');
+      if (spaceId) {
+        currentSpaceId = spaceId;
+        // Fetch slug from registry to set tenant context
+        try {
+          const master = getSupabase(); // default client is master
+          const { data, error } = await master.from('spaces_registry').select('slug').eq('id', spaceId).single();
+          if (data) {
+            await setTenantBySlug(data.slug);
+            await revealAdminPanel(false); // Master mode
+          } else {
+            revealDashboard();
+          }
+        } catch (err) {
+          console.error(err);
+          revealDashboard();
+        }
+      } else {
+        revealDashboard();
+      }
+    } else {
+      revealMasterLogin();
+    }
   }
 });
+
+function revealSpaceLogin(slug) {
+  document.querySelectorAll('.app-screen, .creator-container').forEach(el => el.classList.add('hidden'));
+  document.getElementById('admin-screen-space-login').classList.remove('hidden');
+
+  // Apply default theme styles
+  applyThemeStyles('rose_garden', document.documentElement);
+  startThemeAnimation('rose_garden', document.getElementById('theme-canvas'));
+
+  const form = document.getElementById('form-space-login');
+  const errorMsg = document.getElementById('space-login-error');
+  form.reset();
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const password = document.getElementById('space-admin-password').value;
+    errorMsg.classList.add('hidden');
+
+    try {
+      const isMatch = await verifySpaceAdminPassword(currentSpaceId, password);
+      if (isMatch) {
+        showToast("مرحباً بك في لوحة تحكم مساحتك! 🔓💖");
+        await revealAdminPanel(true); // Customer mode
+      } else {
+        errorMsg.classList.remove('hidden');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("حدث خطأ أثناء التحقق من كلمة المرور.");
+    }
+  };
+}
 
 function revealMasterLogin() {
   document.querySelectorAll('.app-screen, .creator-container').forEach(el => el.classList.add('hidden'));
@@ -67,7 +134,15 @@ function revealMasterLogin() {
         const spaceId = urlParams.get('spaceId');
         if (spaceId) {
           currentSpaceId = spaceId;
-          revealAdminPanel();
+          // Set tenant context
+          const master = getSupabase();
+          const { data } = await master.from('spaces_registry').select('slug').eq('id', spaceId).single();
+          if (data) {
+            await setTenantBySlug(data.slug);
+            await revealAdminPanel(false);
+          } else {
+            revealDashboard();
+          }
         } else {
           revealDashboard();
         }
@@ -115,18 +190,20 @@ function revealDashboard() {
 
   document.getElementById('form-admin-create').onsubmit = async (e) => {
     e.preventDefault();
-    const playerPwd = document.getElementById('setup-player-password').value;
+    const slug = document.getElementById('setup-space-slug').value.trim();
     const adminPwd = document.getElementById('setup-admin-password').value;
+    const tenantUrl = document.getElementById('setup-supabase-url').value.trim();
+    const tenantKey = document.getElementById('setup-supabase-key').value.trim();
 
-    showToast("جاري إنشاء مساحة الحب الخاصة بكما...");
+    showToast("جاري تسجيل مساحة الحب المخصصة...");
     try {
-      const spaceId = await createCoupleSpace(playerPwd, adminPwd);
-      showToast("تم إنشاء مساحة الحب بنجاح! ✨");
+      await createCoupleSpace(slug, adminPwd, tenantUrl, tenantKey);
+      showToast("تم تسجيل مساحة الحب وقاعدة البيانات بنجاح! ✨");
       modalCreate.classList.add('hidden');
       loadDashboardSpaces();
     } catch (err) {
       console.error(err);
-      showToast("حدث خطأ أثناء الاتصال بـ Supabase.");
+      showToast("حدث خطأ أثناء تسجيل المساحة بقاعدة البيانات الرئيسية.");
     }
   };
 
@@ -168,15 +245,15 @@ async function loadDashboardSpaces() {
       });
 
       tr.innerHTML = `
-        <td style="padding: 12px 8px; font-family: monospace; font-size: 0.9rem;">
-          ${s.id}
-          <button class="btn-copy-space-id" data-id="${s.id}" style="background: none; border: none; cursor: pointer; color: #888; margin-right: 5px;" title="نسخ الرمز"><i class="fa-solid fa-copy"></i></button>
+        <td style="padding: 12px 8px; font-weight: bold; color: var(--progress-bar-color); font-family: sans-serif;">
+          ${s.slug}
+          <button class="btn-copy-space-id" data-slug="${s.slug}" style="background: none; border: none; cursor: pointer; color: #888; margin-right: 5px;" title="نسخ رابط اللعب المختصر"><i class="fa-solid fa-copy"></i></button>
         </td>
         <td style="padding: 12px 8px; color: #555;">${dateStr}</td>
         <td style="padding: 12px 8px; text-align: center; font-weight: bold; color: var(--progress-bar-color);">${s.views}</td>
         <td style="padding: 12px 8px; text-align: center; font-weight: bold; color: var(--color-success);">${s.completions}</td>
         <td style="padding: 12px 8px; text-align: center;">
-          <button class="btn-small btn-primary btn-manage-space" data-id="${s.id}" style="margin-left: 5px;"><i class="fa-solid fa-pen-to-square"></i> إدارة</button>
+          <button class="btn-small btn-primary btn-manage-space" data-id="${s.id}" data-slug="${s.slug}" style="margin-left: 5px;"><i class="fa-solid fa-pen-to-square"></i> إدارة</button>
           <button class="btn-small btn-secondary btn-delete-space" data-id="${s.id}" style="background-color: #fa3e3e; color: white; border-color: #fa3e3e;"><i class="fa-solid fa-trash-can"></i> حذف</button>
         </td>
       `;
@@ -185,18 +262,27 @@ async function loadDashboardSpaces() {
 
     container.querySelectorAll('.btn-copy-space-id').forEach(btn => {
       btn.onclick = () => {
-        const id = btn.getAttribute('data-id');
-        navigator.clipboard.writeText(id);
-        showToast("تم نسخ الرمز! 📋");
+        const slug = btn.getAttribute('data-slug');
+        const playUrl = `${window.location.origin}/#play/${slug}`;
+        navigator.clipboard.writeText(playUrl);
+        showToast("تم نسخ رابط اللعب المختصر! 📋");
       };
     });
 
     container.querySelectorAll('.btn-manage-space').forEach(btn => {
-      btn.onclick = () => {
+      btn.onclick = async () => {
         const id = btn.getAttribute('data-id');
+        const slug = btn.getAttribute('data-slug');
         currentSpaceId = id;
-        history.pushState(null, '', '?spaceId=' + id);
-        revealAdminPanel();
+        showToast("جاري تبديل الاتصال بقاعدة بيانات المساحة... 🔐");
+        try {
+          await setTenantBySlug(slug);
+          history.pushState(null, '', '?spaceId=' + id);
+          await revealAdminPanel(false); // Master admin managing space
+        } catch (err) {
+          console.error(err);
+          showToast(err.message || "حدث خطأ أثناء تبديل الاتصال.");
+        }
       };
     });
 
@@ -244,8 +330,9 @@ function setupPasswordToggles() {
 /**
  * Unlocks the admin panel view and loads space details.
  */
-async function revealAdminPanel() {
+async function revealAdminPanel(isCustomerMode = false) {
   document.getElementById('admin-screen-master-login').classList.add('hidden');
+  document.getElementById('admin-screen-space-login').classList.add('hidden');
   document.getElementById('admin-screen-dashboard').classList.add('hidden');
   document.getElementById('admin-panel-container').classList.remove('hidden');
 
@@ -264,11 +351,31 @@ async function revealAdminPanel() {
 
   setupActionListeners();
 
-  // Bind Back to Dashboard Button
-  document.getElementById('admin-btn-back-dashboard').onclick = () => {
-    history.pushState(null, '', window.location.pathname);
-    revealDashboard();
-  };
+  const backBtn = document.getElementById('admin-btn-back-dashboard');
+  const logoutBtn = document.getElementById('admin-btn-logout');
+
+  if (isCustomerMode) {
+    backBtn.style.display = 'none'; // Hide back to master dashboard button
+    logoutBtn.onclick = () => {
+      if (confirm("هل تريد تسجيل الخروج؟")) {
+        sessionStorage.removeItem(`unlocked_admin_${currentSpaceId}`);
+        window.location.reload();
+      }
+    };
+  } else {
+    backBtn.style.display = 'inline-flex';
+    // Bind Back to Dashboard Button
+    backBtn.onclick = () => {
+      history.pushState(null, '', window.location.pathname);
+      revealDashboard();
+    };
+    logoutBtn.onclick = () => {
+      if (confirm("هل تريد تسجيل الخروج؟")) {
+        sessionStorage.removeItem('unlocked_master');
+        window.location.reload();
+      }
+    };
+  }
 }
 
 /**
@@ -1094,18 +1201,12 @@ function setupActionListeners() {
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  // Logout admin
-  document.getElementById('admin-btn-logout').onclick = () => {
-    if (confirm("هل تريد تسجيل الخروج وإغلاق لوحة الإدارة؟")) {
-      sessionStorage.removeItem('unlocked_master');
-      window.location.reload();
-    }
-  };
 }
 
 function updateShareLinkUI() {
   const shareLinkInput = document.getElementById('admin-share-link');
-  const gameLink = `${window.location.origin}/#play/${currentGameId}`;
+  const slug = getCurrentTenantSlug();
+  const gameLink = slug ? `${window.location.origin}/#play/${slug}` : `${window.location.origin}/#play/${currentGameId}`;
   shareLinkInput.value = gameLink;
 
   document.getElementById('admin-share-link-wrapper').classList.remove('hidden');

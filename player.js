@@ -1,6 +1,7 @@
 // Love Hunt - Game Player Engine Module
 import { fetchGame, fetchSpaceUI, incrementGameViews, incrementGameCompletions } from './storage.js';
 import { applyThemeStyles, startThemeAnimation, stopThemeAnimation } from './themes.js';
+import { getCurrentTenantSlug } from './config.js';
 function showToast(msg) {
   const container = document.getElementById('toast-container');
   if (!container) return;
@@ -53,7 +54,7 @@ export async function initPlayer(gameId) {
     hydratePlayerUITexts();
 
     // Register View
-    incrementGameViews(gameId);
+    incrementGameViews(currentGame.id);
 
     // Apply custom styling overrides
     applyThemeStyles(currentGame.theme, document.documentElement, currentGame.customization);
@@ -246,8 +247,15 @@ function renderActiveStage() {
 
   const stage = currentGame.stages[currentStageIndex];
   
-  // Update Header details
-  document.getElementById('player-stage-counter').textContent = `المرحلة ${currentStageIndex + 1} من ${currentGame.stages.length}`;
+  // Update Header details & Progress Line width
+  const totalStages = currentGame.stages.length;
+  document.getElementById('player-stage-counter').textContent = `المرحلة ${currentStageIndex + 1} من ${totalStages}`;
+  
+  const progressPercent = ((currentStageIndex + 1) / (totalStages || 1)) * 100;
+  const progressBar = document.getElementById('player-stage-progress-bar');
+  if (progressBar) {
+    progressBar.style.width = `${progressPercent}%`;
+  }
 
   // Render media attachments
   const mediaContainer = document.getElementById('player-media-container');
@@ -436,7 +444,7 @@ async function launchCelebration() {
     setTimeout(() => {
       incrementGameCompletions(currentGame.id);
       sessionStorage.setItem(`unlocked_${currentGame.coupleSpaceId}`, 'true');
-      window.location.hash = `#celebration/${currentGame.id}`;
+      window.location.hash = `#celebration/${getCurrentTenantSlug()}`;
     }, 1500);
 
   }, 2000); // Wait exactly 2.0s for the slider meetup animation to finish

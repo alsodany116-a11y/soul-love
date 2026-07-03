@@ -77,40 +77,45 @@
     <section id="screen-player" class="app-screen hidden">
       <div id="player-active-card-container" class="player-wrapper">
         
-        <!-- Interactive Heart Progress Map -->
-        <div class="heart-map-card">
-          <div class="heart-map-container">
-            <svg class="heart-map-svg" viewBox="0 0 100 40">
-              <!-- Dotted path from left to right -->
-              <path id="heart-map-path" d="M 12 20 Q 50 6 88 20" fill="none" stroke="#ffccd5" stroke-width="1.2" stroke-dasharray="2 2"></path>
-            </svg>
-            
-            <!-- Avatar Left (Him) -->
-            <div id="avatar-boy" class="map-avatar-node boy-avatar">
-              <div class="avatar-img-circle">
-                <img src="" id="avatar-boy-img" alt="صورة الشاب">
-              </div>
-              <div class="map-node-heart boy-heart"><i class="fa-solid fa-heart"></i></div>
-            </div>
-
-            <!-- Avatar Right (Her) - This one slides towards the left -->
-            <div id="avatar-girl" class="map-avatar-node girl-avatar">
-              <div class="avatar-img-circle">
-                <img src="" id="avatar-girl-img" alt="صورة الفتاة">
-              </div>
-              <div class="map-node-heart girl-heart"><i class="fa-solid fa-heart"></i></div>
-            </div>
-
-            <!-- Dynamic stage dot landmarks on map -->
-            <div id="map-stage-dots"></div>
-          </div>
-        </div>
-
         <!-- Stage Card -->
         <div id="player-stage-card" class="stage-card">
           <!-- Card Header (Status) -->
           <div class="stage-card-header">
             <span id="player-stage-counter">المرحلة 1 من 5</span>
+            
+            <!-- Interactive Heart Progress Map (Placed inside stage-card, below stage counter and above the progress line) -->
+            <div class="heart-map-card" style="background: none; border: none; box-shadow: none; padding: 0; margin: 10px 0; width: 100%;">
+              <div class="heart-map-container" style="height: 100px;">
+                <svg class="heart-map-svg" viewBox="0 0 100 40">
+                  <!-- Dotted path from left to right -->
+                  <path id="heart-map-path" d="M 12 20 Q 50 6 88 20" fill="none" stroke="#ffccd5" stroke-width="1.2" stroke-dasharray="2 2"></path>
+                </svg>
+                
+                <!-- Avatar Left (Him) -->
+                <div id="avatar-boy" class="map-avatar-node boy-avatar">
+                  <div class="avatar-img-circle">
+                    <img src="" id="avatar-boy-img" alt="صورة الشاب">
+                  </div>
+                  <div class="map-node-heart boy-heart"><i class="fa-solid fa-heart"></i></div>
+                </div>
+
+                <!-- Avatar Right (Her) - This one slides towards the left -->
+                <div id="avatar-girl" class="map-avatar-node girl-avatar">
+                  <div class="avatar-img-circle">
+                    <img src="" id="avatar-girl-img" alt="صورة الفتاة">
+                  </div>
+                  <div class="map-node-heart girl-heart"><i class="fa-solid fa-heart"></i></div>
+                </div>
+
+                <!-- Dynamic stage dot landmarks on map -->
+                <div id="map-stage-dots"></div>
+              </div>
+            </div>
+
+            <!-- The Progress Line (الخط) -->
+            <div class="stage-progress-bar-container">
+              <div id="player-stage-progress-bar" class="stage-progress-bar" style="width: 20%;"></div>
+            </div>
           </div>
 
           <!-- Card Body -->
@@ -135,7 +140,7 @@
           <!-- Card Footer (Controls) -->
           <div class="stage-card-footer">
             <button type="button" id="player-btn-hint" class="btn-secondary" style="display: none !important;"><i class="fa-regular fa-lightbulb"></i> <span id="player-text-hint">عرض تلميح 💡</span></button>
-            <button type="button" id="player-btn-submit" class="btn-primary" style="width: 100%;"><span id="player-text-submit">إرسال الإجابة 💌</span> <i class="fa-solid fa-circle-check"></i></button>
+            <button type="button" id="player-btn-submit" class="btn-primary player-btn-submit-pill" style="width: 100%;"><i class="fa-solid fa-paper-plane" style="transform: scaleX(-1); margin-left: 8px;"></i> <span id="player-text-submit">إرسال الإجابة 💌</span></button>
           </div>
 
           <!-- Hint display box -->

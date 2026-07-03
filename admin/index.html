@@ -89,6 +89,29 @@
   </section>
 
   <!-- ========================================== -->
+  <!-- 0B. ADMIN CUSTOMER SPACE LOGIN SCREEN      -->
+  <!-- ========================================== -->
+  <section id="admin-screen-space-login" class="app-screen hidden">
+    <div class="lock-box fade-in" style="max-width: 500px;">
+      <div class="lock-icon">
+        <i class="fa-solid fa-heart-circle-check" style="color: var(--progress-bar-color);"></i>
+      </div>
+      <h2 class="lock-title" id="space-login-title">لوحة تحكم مساحة الحب 💖</h2>
+      <p class="lock-desc">يرجى إدخال رمز المرور الخاص بلوحة تحكم مساحتك للبدء في تعديل الألغاز والذكريات.</p>
+      <form id="form-space-login">
+        <div class="form-group">
+          <div class="input-password-wrapper">
+            <input type="password" id="space-admin-password" required placeholder="أدخل كلمة مرور الإدارة الخاصة بك...">
+            <button type="button" class="btn-toggle-password"><i class="fa-regular fa-eye"></i></button>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary btn-block">دخول لوحة التحكم <i class="fa-solid fa-right-to-bracket"></i></button>
+      </form>
+      <div id="space-login-error" class="auth-error-msg hidden">كلمة المرور غير صحيحة! ❌</div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
   <!-- 1. ADMIN MASTER DASHBOARD                  -->
   <!-- ========================================== -->
   <section id="admin-screen-dashboard" class="creator-container hidden" style="max-width: 1200px; margin: 0 auto; padding: 30px 20px;">
@@ -156,24 +179,30 @@
 
     <!-- Create Modal inside Dashboard -->
     <div id="modal-admin-create" class="modal hidden">
-      <div class="modal-content scale-in">
+      <div class="modal-content scale-in" style="max-width: 600px;">
         <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
         <h2 class="modal-title">إنشاء مساحة حب جديدة 💖</h2>
-        <p class="modal-desc">قم بتعيين كلمة مرور اللعبة التي ستقدمها لشريكتك لفتح الأسئلة، وكلمة مرور سرية أخرى للإدارة الفردية للتحكم بالخيارات.</p>
+        <p class="modal-desc">قم بإدخال بيانات المساحة وقاعدة بيانات Supabase المنفصلة المخصصة للعميل:</p>
         <form id="form-admin-create">
           <div class="form-group">
-            <label for="setup-player-password">كلمة مرور اللعبة (للشريكة)</label>
+            <label for="setup-space-slug">الرابط المختصر للمساحة (Slug / الاسم)</label>
+            <input type="text" id="setup-space-slug" required placeholder="مثال: ahmed-and-sara (بالأحرف الإنجليزية فقط)" pattern="^[a-zA-Z0-9\-]+$" style="text-align: left;">
+            <p class="help-text">سيكون رابط اللعب: domain.com/#play/ahmed-and-sara</p>
+          </div>
+          <div class="form-group">
+            <label for="setup-admin-password">كلمة مرور لوحة تحكم العميل</label>
             <div class="input-password-wrapper">
-              <input type="password" id="setup-player-password" required placeholder="رمز فك قفل اللعبة..." minlength="4">
+              <input type="password" id="setup-admin-password" required placeholder="رمز دخول لوحة تحكم العميل..." minlength="4">
               <button type="button" class="btn-toggle-password"><i class="fa-regular fa-eye"></i></button>
             </div>
           </div>
           <div class="form-group">
-            <label for="setup-admin-password">كلمة مرور لوحة الإدارة الفردية</label>
-            <div class="input-password-wrapper">
-              <input type="password" id="setup-admin-password" required placeholder="رمز الدخول للوحة التحكم..." minlength="4">
-              <button type="button" class="btn-toggle-password"><i class="fa-regular fa-eye"></i></button>
-            </div>
+            <label for="setup-supabase-url">رابط Supabase URL للمساحة</label>
+            <input type="text" id="setup-supabase-url" required placeholder="https://xxxx.supabase.co" style="text-align: left;">
+          </div>
+          <div class="form-group">
+            <label for="setup-supabase-key">مفتاح Supabase Anon Key للمساحة</label>
+            <textarea id="setup-supabase-key" required placeholder="أدخل Anon Key الخاص بقاعدة بيانات العميل..." rows="3" style="text-align: left; font-family: monospace; font-size: 0.85rem; width: 100%; padding: 10px; border-radius: var(--border-radius); border: 2px solid var(--input-border-color); background-color: var(--input-bg-color); outline: none;"></textarea>
           </div>
           <button type="submit" class="btn-primary btn-block">توليد مساحة الحب والبدء <i class="fa-solid fa-check"></i></button>
         </form>
