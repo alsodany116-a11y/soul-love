@@ -1035,7 +1035,7 @@ function setupActionListeners() {
       loadDreamsList();
     } catch (err) {
       console.error(err);
-      showToast("خطأ في حفظ الحلم.");
+      showToast("خطأ في حفظ الحلم: " + err.message);
     }
   };
 
@@ -1065,7 +1065,7 @@ function setupActionListeners() {
       loadMemoriesList();
     } catch (err) {
       console.error(err);
-      showToast("خطأ في حفظ الذكرى.");
+      showToast("خطأ في حفظ الذكرى: " + err.message);
     }
   };
 
@@ -1112,7 +1112,7 @@ function setupActionListeners() {
       loadDatesList();
     } catch (err) {
       console.error(err);
-      showToast("فشل الحفظ.");
+      showToast("فشل الحفظ: " + err.message);
     }
   };
 
@@ -1182,7 +1182,7 @@ function setupActionListeners() {
       updateShareLinkUI();
     } catch (err) {
       console.error(err);
-      showToast("حدث خطأ أثناء الحفظ الكلي.");
+      showToast("حدث خطأ أثناء الحفظ الكلي: " + err.message);
     }
   };
 
