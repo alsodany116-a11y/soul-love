@@ -28,6 +28,12 @@ async function router() {
   const param = parts[1];
   const subParam = parts[2];
 
+  // Admin redirect hook for play/slug/admin and journey/slug/admin
+  if ((route === '#play' || route === '#journey') && subParam === 'admin') {
+    window.location.href = `./admin/#${param}`;
+    return;
+  }
+
   // Hide all screens initially
   document.querySelectorAll('.app-screen').forEach(screen => {
     screen.classList.add('hidden');

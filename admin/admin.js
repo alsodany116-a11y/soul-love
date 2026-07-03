@@ -25,6 +25,7 @@ let herPhotoUrl = "";
 
 document.addEventListener('DOMContentLoaded', async () => {
   setupPasswordToggles();
+  initFlatpickr();
 
   const urlParams = new URLSearchParams(window.location.search);
   const spaceSlug = urlParams.get('space');
@@ -1095,9 +1096,6 @@ function setupActionListeners() {
     }
   };
 
-  document.getElementById('form-add-date').onclick = () => {
-    document.getElementById('date-is-milestone').checked = false;
-  };
   document.getElementById('admin-btn-add-date').onclick = () => {
     document.getElementById('form-add-date').reset();
     document.getElementById('date-is-milestone').checked = false;
@@ -1288,4 +1286,27 @@ function showToast(msg) {
   container.appendChild(toast);
   
   setTimeout(() => toast.remove(), 3000);
+}
+
+function initFlatpickr() {
+  if (typeof window.flatpickr !== 'undefined') {
+    // Dates/timeline fields
+    window.flatpickr("#date-value", {
+      locale: "ar",
+      dateFormat: "Y-m-d",
+      disableMobile: true
+    });
+    window.flatpickr("#memory-date", {
+      locale: "ar",
+      dateFormat: "Y-m-d",
+      disableMobile: true
+    });
+    // Start/expiry dates
+    window.flatpickr("#admin-start-date, #admin-expiry-date", {
+      locale: "ar",
+      enableTime: true,
+      dateFormat: "Y-m-d H:i",
+      disableMobile: true
+    });
+  }
 }
