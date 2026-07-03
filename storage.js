@@ -222,15 +222,35 @@ export async function fetchSpaceUI(spaceId) {
   const supabase = getSupabase();
   if (!supabase) throw new Error("Supabase is not initialized.");
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('couple_spaces')
     .select('custom_ui_texts, his_photo_url, her_photo_url')
     .eq('id', spaceId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Error fetching space UI configs:", error);
     throw error;
+  }
+
+  if (!data) {
+    console.log("Self-initializing couple_spaces row for spaceId:", spaceId);
+    const { data: newRow, error: insertError } = await supabase
+      .from('couple_spaces')
+      .insert([{
+        id: spaceId,
+        password_hash: await hashPassword("love"), // Default play password
+        admin_password_hash: "NOT_USED",
+        custom_ui_texts: DEFAULT_UI_TEXTS
+      }])
+      .select('custom_ui_texts, his_photo_url, her_photo_url')
+      .single();
+
+    if (insertError) {
+      console.error("Error self-initializing space UI configs:", insertError);
+      throw insertError;
+    }
+    data = newRow;
   }
 
   return {
