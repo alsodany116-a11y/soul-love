@@ -41,13 +41,14 @@ async function router() {
 
   switch (route) {
     case '#welcome':
-      // Redirect root/welcome directly to the themed Lock screen in generic match mode
-      window.location.hash = '#lock/generic/main';
+      showScreen('screen-welcome');
+      // Apply default styling overrides
+      applyThemeStyles('rose_garden', document.documentElement, {});
       break;
 
     case '#play':
       if (!param) {
-        window.location.hash = '#lock/generic/main';
+        window.location.hash = '#welcome';
         break;
       }
 
@@ -58,7 +59,7 @@ async function router() {
         const game = await fetchGame(param); // Loads the active game from tenant db
         if (!game) {
           showToast("عذراً، لم يقم الشريك بإعداد الألغاز بعد!");
-          window.location.hash = '#lock/generic/main';
+          window.location.hash = '#welcome';
           break;
         }
 
@@ -72,13 +73,13 @@ async function router() {
       } catch (err) {
         console.error(err);
         showToast("خطأ في تحميل اللعبة.");
-        window.location.hash = '#lock/generic/main';
+        window.location.hash = '#welcome';
       }
       break;
 
     case '#celebration':
       if (!param) {
-        window.location.hash = '#lock/generic/main';
+        window.location.hash = '#welcome';
         break;
       }
       try {
@@ -88,13 +89,13 @@ async function router() {
       } catch (err) {
         console.error(err);
         showToast("خطأ في تحميل صفحة الاحتفال.");
-        window.location.hash = '#lock/generic/main';
+        window.location.hash = '#welcome';
       }
       break;
 
     case '#journey':
       if (!param) {
-        window.location.hash = '#lock/generic/main';
+        window.location.hash = '#welcome';
         break;
       }
 
@@ -112,14 +113,14 @@ async function router() {
       } catch (err) {
         console.error(err);
         showToast("خطأ في تحميل مسار الذكريات.");
-        window.location.hash = '#lock/generic/main';
+        window.location.hash = '#welcome';
       }
       break;
 
     case '#lock':
       // Lock route parameters: #lock/<action>/<slug>
       if (!param || !subParam) {
-        window.location.hash = '#lock/generic/main';
+        window.location.hash = '#welcome';
         break;
       }
       showScreen('screen-lock');
@@ -127,7 +128,7 @@ async function router() {
       break;
 
     default:
-      window.location.hash = '#lock/generic/main';
+      window.location.hash = '#welcome';
       break;
   }
 }

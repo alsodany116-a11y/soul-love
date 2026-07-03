@@ -89,7 +89,7 @@ export async function uploadMedia(file) {
 /**
  * Creates a new Couple Space (Love Space) in the master registry.
  */
-export async function createCoupleSpace(slug, adminPassword, tenantSupabaseUrl, tenantSupabaseAnonKey) {
+export async function createCoupleSpace(slug, adminPassword, tenantSupabaseUrl, tenantSupabaseAnonKey, price = 0, tier = 1) {
   const master = getMasterClient();
   if (!master) throw new Error("Master database is not initialized.");
 
@@ -101,7 +101,9 @@ export async function createCoupleSpace(slug, adminPassword, tenantSupabaseUrl, 
       slug: slug.toLowerCase().trim(),
       admin_password_hash: adminPasswordHash,
       tenant_supabase_url: tenantSupabaseUrl.trim(),
-      tenant_supabase_anon_key: tenantSupabaseAnonKey.trim()
+      tenant_supabase_anon_key: tenantSupabaseAnonKey.trim(),
+      price: parseFloat(price) || 0,
+      tier: parseInt(tier) || 1
     }])
     .select('id')
     .single();
@@ -864,6 +866,8 @@ export async function fetchAllSpaces() {
     slug: s.slug,
     supabaseUrl: s.tenant_supabase_url,
     createdAt: s.created_at,
+    price: s.price || 0,
+    tier: s.tier || 1,
     theme: 'rose_garden',
     views: 0,
     completions: 0

@@ -518,6 +518,60 @@ export async function setupCelebrationScreen(gameId) {
       window.location.hash = `#journey/${getCurrentTenantSlug()}`;
     };
 
+    // Celebration compact music widget sync & events
+    const audio = document.getElementById('global-bg-music');
+    const songName = document.getElementById('celebration-song-name');
+    const songTimer = document.getElementById('celebration-song-timer');
+    const vinyl = document.getElementById('celebration-vinyl');
+    const toggleBtn = document.getElementById('celebration-music-toggle');
+
+    if (audio && songName) {
+      const syncCelebrationMusicWidget = () => {
+        const activeTitle = document.getElementById('audio-hud-title').textContent || "جاري تشغيل اللحن...";
+        songName.textContent = activeTitle;
+        if (audio.paused) {
+          toggleBtn.innerHTML = `<i class="fa-solid fa-play"></i>`;
+          vinyl.classList.add('spinning-paused');
+        } else {
+          toggleBtn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+          vinyl.classList.remove('spinning-paused');
+        }
+      };
+
+      syncCelebrationMusicWidget();
+
+      audio.addEventListener('play', syncCelebrationMusicWidget);
+      audio.addEventListener('pause', syncCelebrationMusicWidget);
+      audio.addEventListener('timeupdate', () => {
+        if (!audio.duration || isNaN(audio.duration)) return;
+        const formatTime = (secs) => {
+          const m = Math.floor(secs / 60).toString().padStart(2, '0');
+          const s = Math.floor(secs % 60).toString().padStart(2, '0');
+          return `${m}:${s}`;
+        };
+        songTimer.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+      });
+
+      toggleBtn.onclick = () => {
+        if (audio.paused) {
+          audio.play().then(syncCelebrationMusicWidget);
+        } else {
+          audio.pause();
+          syncCelebrationMusicWidget();
+        }
+      };
+
+      document.getElementById('celebration-music-next').onclick = () => {
+        document.getElementById('audio-hud-next').click();
+        setTimeout(syncCelebrationMusicWidget, 150);
+      };
+      
+      document.getElementById('celebration-music-prev').onclick = () => {
+        document.getElementById('audio-hud-prev').click();
+        setTimeout(syncCelebrationMusicWidget, 150);
+      };
+    }
+
   } catch (err) {
     console.error("Celebration boot error:", err);
     window.location.hash = "#welcome";
@@ -550,6 +604,12 @@ async function playGameMusic(spaceId) {
 
     loadTrack(0);
     audioHud.classList.remove('hidden');
+    audio.play().then(() => {
+      playBtn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+    }).catch(err => {
+      console.log("Autoplay blocked, waiting for user click.", err);
+      playBtn.innerHTML = `<i class="fa-solid fa-play"></i>`;
+    });
 
     // Play next song on end
     audio.onended = () => {

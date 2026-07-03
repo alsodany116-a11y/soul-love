@@ -1,5 +1,5 @@
 // Love Hunt - Admin Panel Controller Module
-import { getSupabase, setTenantBySlug, getCurrentTenantSlug } from '../config.js';
+import { getSupabase, setTenantBySlug, getCurrentTenantSlug, getCurrentTenantTier } from '../config.js';
 import { 
   createCoupleSpace, verifySpaceAdminPassword, isSpaceAdminUnlocked, fetchSpaceUI, updateSpaceUI, updateSpacePhotos,
   updateSpacePasswords,
@@ -23,9 +23,91 @@ let customizationOverrides = {};
 let hisPhotoUrl = "";
 let herPhotoUrl = "";
 
+let allSpacesCached = [];
+let activeDashboardTab = 'recent'; // 'recent' or 'all'
+
+const TIER_LIMITS = {
+  1: { // Tier 1
+    stages: 5,
+    themes: 4,
+    songs: 3,
+    dreams: 5,
+    memories: 8,
+    photos: 10,
+    dates: 5
+  },
+  2: { // Tier 2
+    stages: 15,
+    themes: 6,
+    songs: 10,
+    dreams: 10,
+    memories: 20,
+    photos: 25,
+    dates: 10
+  },
+  3: { // Tier 3
+    stages: 999,
+    themes: 8,
+    songs: 999,
+    dreams: 999,
+    memories: 999,
+    photos: 999,
+    dates: 999
+  }
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
   setupPasswordToggles();
   initFlatpickr();
+
+  // Register Service Worker for PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Service Worker Registered.', reg))
+      .catch(err => console.log('Service Worker Failed to Register.', err));
+  }
+
+  // Tab triggers for master dashboard
+  const tabRecent = document.getElementById('dashboard-tab-recent');
+  const tabAll = document.getElementById('dashboard-tab-all');
+  if (tabRecent && tabAll) {
+    tabRecent.onclick = () => {
+      activeDashboardTab = 'recent';
+      tabRecent.classList.add('btn-primary');
+      tabRecent.classList.remove('btn-secondary');
+      tabAll.classList.add('btn-secondary');
+      tabAll.classList.remove('btn-primary');
+      renderSpacesList();
+    };
+    tabAll.onclick = () => {
+      activeDashboardTab = 'all';
+      tabAll.classList.add('btn-primary');
+      tabAll.classList.remove('btn-secondary');
+      tabRecent.classList.add('btn-secondary');
+      tabRecent.classList.remove('btn-primary');
+      renderSpacesList();
+    };
+  }
+
+  // Date Filter Trigger for stats
+  const btnFilterDate = document.getElementById('btn-filter-stats-date');
+  if (btnFilterDate) {
+    btnFilterDate.onclick = () => {
+      const filterDateVal = document.getElementById('filter-stats-date').value;
+      const output = document.getElementById('filtered-stats-output');
+      if (!filterDateVal) {
+        output.style.display = 'none';
+        return;
+      }
+      const matched = allSpacesCached.filter(s => {
+        const localDate = new Date(s.createdAt).toISOString().split('T')[0];
+        return localDate === filterDateVal;
+      });
+      const daySales = matched.reduce((sum, s) => sum + (parseFloat(s.price) || 0), 0);
+      output.innerHTML = `<i class="fa-solid fa-calculator"></i> المساحات: ${matched.length} | المبيعات: $${daySales.toFixed(2)}`;
+      output.style.display = 'block';
+    };
+  }
 
   const urlParams = new URLSearchParams(window.location.search);
   let spaceSlug = urlParams.get('space');
@@ -197,18 +279,20 @@ function revealDashboard() {
     e.preventDefault();
     const slug = document.getElementById('setup-space-slug').value.trim();
     const adminPwd = document.getElementById('setup-admin-password').value;
+    const price = document.getElementById('setup-space-price').value;
+    const tier = document.getElementById('setup-space-tier').value;
     const tenantUrl = document.getElementById('setup-supabase-url').value.trim();
     const tenantKey = document.getElementById('setup-supabase-key').value.trim();
 
     showToast("جاري تسجيل مساحة الحب المخصصة...");
     try {
-      await createCoupleSpace(slug, adminPwd, tenantUrl, tenantKey);
+      await createCoupleSpace(slug, adminPwd, tenantUrl, tenantKey, price, tier);
       showToast("تم تسجيل مساحة الحب وقاعدة البيانات بنجاح! ✨");
-      modalCreate.classList.add('hidden');
+      document.getElementById('modal-admin-create').classList.add('hidden');
       loadDashboardSpaces();
     } catch (err) {
       console.error(err);
-      showToast("حدث خطأ أثناء تسجيل المساحة بقاعدة البيانات الرئيسية.");
+      showToast("حدث خطأ أثناء تسجيل المساحة بقاعدة البيانات الرئيسية: " + err.message);
     }
   };
 
@@ -229,89 +313,105 @@ function revealDashboard() {
 }
 
 async function loadDashboardSpaces() {
-  const container = document.getElementById('dashboard-spaces-list');
-  container.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">جاري تحميل مساحات الحب...</td></tr>';
-
   try {
-    const spaces = await fetchAllSpaces();
-    container.innerHTML = '';
+    allSpacesCached = await fetchAllSpaces();
+    
+    // Update Master Stats Count
+    const countEl = document.getElementById('master-stats-count');
+    if (countEl) countEl.textContent = allSpacesCached.length;
+    
+    // Calculate and Update Master Stats Sales
+    const totalSales = allSpacesCached.reduce((sum, s) => sum + (parseFloat(s.price) || 0), 0);
+    const salesEl = document.getElementById('master-stats-sales');
+    if (salesEl) salesEl.textContent = "$" + totalSales.toFixed(2);
 
-    if (spaces.length === 0) {
-      container.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #777;">لا توجد مساحات حب نشطة حالياً. اضغط على زر "إنشاء مساحة" للبدء!</td></tr>';
-      return;
-    }
-
-    spaces.forEach(s => {
-      const tr = document.createElement('tr');
-      tr.style.borderBottom = '1px solid #eee';
-
-      const dateStr = new Date(s.createdAt).toLocaleDateString('ar-EG', {
-        year: 'numeric', month: 'long', day: 'numeric'
-      });
-
-      tr.innerHTML = `
-        <td style="padding: 12px 8px; font-weight: bold; color: var(--progress-bar-color); font-family: sans-serif;">
-          ${s.slug}
-          <button class="btn-copy-space-id" data-slug="${s.slug}" style="background: none; border: none; cursor: pointer; color: #888; margin-right: 5px;" title="نسخ رابط اللعب المختصر"><i class="fa-solid fa-copy"></i></button>
-        </td>
-        <td style="padding: 12px 8px; color: #555;">${dateStr}</td>
-        <td style="padding: 12px 8px; text-align: center; font-weight: bold; color: var(--progress-bar-color);">${s.views}</td>
-        <td style="padding: 12px 8px; text-align: center; font-weight: bold; color: var(--color-success);">${s.completions}</td>
-        <td style="padding: 12px 8px; text-align: center;">
-          <button class="btn-small btn-primary btn-manage-space" data-id="${s.id}" data-slug="${s.slug}" style="margin-left: 5px;"><i class="fa-solid fa-pen-to-square"></i> إدارة</button>
-          <button class="btn-small btn-secondary btn-delete-space" data-id="${s.id}" style="background-color: #fa3e3e; color: white; border-color: #fa3e3e;"><i class="fa-solid fa-trash-can"></i> حذف</button>
-        </td>
-      `;
-      container.appendChild(tr);
-    });
-
-    container.querySelectorAll('.btn-copy-space-id').forEach(btn => {
-      btn.onclick = () => {
-        const slug = btn.getAttribute('data-slug');
-        const playUrl = `${window.location.origin}/#play/${slug}`;
-        navigator.clipboard.writeText(playUrl);
-        showToast("تم نسخ رابط اللعب المختصر! 📋");
-      };
-    });
-
-    container.querySelectorAll('.btn-manage-space').forEach(btn => {
-      btn.onclick = async () => {
-        const id = btn.getAttribute('data-id');
-        const slug = btn.getAttribute('data-slug');
-        currentSpaceId = id;
-        showToast("جاري تبديل الاتصال بقاعدة بيانات المساحة... 🔐");
-        try {
-          await setTenantBySlug(slug);
-          history.pushState(null, '', '?spaceId=' + id);
-          await revealAdminPanel(false); // Master admin managing space
-        } catch (err) {
-          console.error(err);
-          showToast(err.message || "حدث خطأ أثناء تبديل الاتصال.");
-        }
-      };
-    });
-
-    container.querySelectorAll('.btn-delete-space').forEach(btn => {
-      btn.onclick = async () => {
-        const id = btn.getAttribute('data-id');
-        if (confirm("⚠️ هل أنت متأكد من حذف هذه المساحة نهائياً؟ سيتم مسح كافة الألغاز والذكريات والصور والموسيقى الخاصة بها بشكل لا يمكن استرجاعه!")) {
-          showToast("جاري حذف المساحة...");
-          try {
-            await deleteCoupleSpace(id);
-            showToast("تم حذف مساحة الحب بنجاح! 🗑️");
-            loadDashboardSpaces();
-          } catch (err) {
-            console.error(err);
-            showToast("حدث خطأ أثناء الحذف.");
-          }
-        }
-      };
-    });
-
+    renderSpacesList();
   } catch (err) {
     console.error(err);
-    container.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #fa3e3e;">فشل تحميل المساحات من قاعدة البيانات.</td></tr>';
+    const container = document.getElementById('dashboard-spaces-list');
+    if (container) container.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #fa3e3e;">فشل تحميل المساحات من قاعدة البيانات.</td></tr>';
   }
+}
+
+function renderSpacesList() {
+  const container = document.getElementById('dashboard-spaces-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  let spacesToRender = [];
+  if (activeDashboardTab === 'recent') {
+    // Show spaces created in the last 24 hours, limited to last 5 spaces
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    spacesToRender = allSpacesCached
+      .filter(s => new Date(s.createdAt) > oneDayAgo)
+      .slice(0, 5);
+  } else {
+    // Show all spaces (archives)
+    spacesToRender = allSpacesCached;
+  }
+
+  if (spacesToRender.length === 0) {
+    container.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #777;">لا توجد مساحات حب مطابقة للتصفية الحالية.</td></tr>';
+    return;
+  }
+
+  spacesToRender.forEach(s => {
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid #eee';
+
+    const dateStr = new Date(s.createdAt).toLocaleDateString('ar-EG', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    const tierNames = {
+      1: "البسيطة (5 مراحل) 🍃",
+      2: "المميزة (15 مرحلة) ⭐",
+      3: "الكاملة (مفتوحة) 💎"
+    };
+    const tierName = tierNames[s.tier] || `باقة ${s.tier}`;
+
+    tr.innerHTML = `
+      <td style="padding: 12px 8px; font-weight: bold; color: var(--progress-bar-color); font-family: sans-serif;">
+        ${s.slug}
+        <button class="btn-copy-space-id" data-slug="${s.slug}" style="background: none; border: none; cursor: pointer; color: #888; margin-right: 5px;" title="نسخ رابط اللعب المختصر"><i class="fa-solid fa-copy"></i></button>
+      </td>
+      <td style="padding: 12px 8px; color: #555;">${dateStr}</td>
+      <td style="padding: 12px 8px; text-align: center; font-weight: bold; color: var(--progress-bar-color);">${tierName}</td>
+      <td style="padding: 12px 8px; text-align: center; font-weight: bold; color: #2e7d32;">$${parseFloat(s.price).toFixed(2)}</td>
+      <td style="padding: 12px 8px; text-align: center;">
+        <button class="btn-small btn-secondary btn-delete-space" data-id="${s.id}" style="background-color: #fa3e3e; color: white; border-color: #fa3e3e;"><i class="fa-solid fa-trash-can"></i> حذف</button>
+      </td>
+    `;
+    container.appendChild(tr);
+  });
+
+  // Bind copy listeners
+  container.querySelectorAll('.btn-copy-space-id').forEach(btn => {
+    btn.onclick = () => {
+      const slug = btn.getAttribute('data-slug');
+      const playUrl = `${window.location.origin}/#play/${slug}`;
+      navigator.clipboard.writeText(playUrl);
+      showToast("تم نسخ رابط اللعب المختصر! 📋");
+    };
+  });
+
+  // Bind delete listeners
+  container.querySelectorAll('.btn-delete-space').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.getAttribute('data-id');
+      if (confirm("⚠️ هل أنت متأكد من حذف هذه المساحة نهائياً؟ سيتم مسح كافة الألغاز والذكريات والصور والموسيقى الخاصة بها بشكل لا يمكن استرجاعه!")) {
+        showToast("جاري حذف المساحة...");
+        try {
+          await deleteCoupleSpace(id);
+          showToast("تم حذف مساحة الحب بنجاح! 🗑️");
+          loadDashboardSpaces();
+        } catch (err) {
+          console.error(err);
+          showToast("حدث خطأ أثناء الحذف: " + err.message);
+        }
+      }
+    };
+  });
 }
 
 /**
@@ -353,6 +453,8 @@ async function revealAdminPanel(isCustomerMode = false) {
   await loadMemoriesList();
   await loadGalleryList();
   await loadDatesList();
+  
+  applyThemeTiers();
 
   setupActionListeners();
 
@@ -381,6 +483,33 @@ async function revealAdminPanel(isCustomerMode = false) {
       }
     };
   }
+}
+
+function applyThemeTiers() {
+  const tier = getCurrentTenantTier();
+  const buttons = document.querySelectorAll('.theme-preset-btn');
+  buttons.forEach((btn, index) => {
+    // Determine if locked
+    let isLocked = false;
+    if (tier === 1 && index >= 4) isLocked = true;
+    if (tier === 2 && index >= 6) isLocked = true;
+
+    // Clean existing padlock or text edits
+    let rawText = btn.textContent.replace(' 🔒', '').trim();
+    const iconClass = btn.querySelector('i')?.outerHTML || '';
+    
+    if (isLocked) {
+      btn.innerHTML = `${iconClass} ${rawText} 🔒`;
+      btn.classList.add('theme-locked');
+      btn.style.opacity = '0.5';
+      btn.style.cursor = 'not-allowed';
+    } else {
+      btn.innerHTML = `${iconClass} ${rawText}`;
+      btn.classList.remove('theme-locked');
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+    }
+  });
 }
 
 /**
@@ -880,6 +1009,10 @@ function setupActionListeners() {
   // Theme Presets
   document.querySelectorAll('.theme-preset-btn').forEach(btn => {
     btn.onclick = () => {
+      if (btn.classList.contains('theme-locked')) {
+        showToast("هذه السمة مغلقة في باقتك الحالية! 🔒 يرجى ترقية الاشتراك لفتحها.");
+        return;
+      }
       activeTheme = btn.getAttribute('data-theme');
       populateStylingSliders({}, activeTheme);
       
@@ -936,7 +1069,15 @@ function setupActionListeners() {
   };
 
   // Add Stage Button
-  document.getElementById('admin-btn-add-stage').onclick = () => openStageEditor(-1);
+  document.getElementById('admin-btn-add-stage').onclick = () => {
+    const tier = getCurrentTenantTier();
+    const limit = TIER_LIMITS[tier]?.stages || 5;
+    if (stages.length >= limit) {
+      showToast(`عذراً، الباقة الحالية تسمح بحد أقصى ${limit} مراحل فقط! ⚠️`);
+      return;
+    }
+    openStageEditor(-1);
+  };
 
   // Form Stage Editor submits
   document.getElementById('form-stage-editor').onsubmit = async (e) => {
@@ -1005,6 +1146,14 @@ function setupActionListeners() {
   // Upload Custom Music Track button
   document.getElementById('admin-btn-upload-music').onclick = async (e) => {
     e.preventDefault();
+    const tier = getCurrentTenantTier();
+    const limit = TIER_LIMITS[tier]?.songs || 3;
+    const currentCount = document.querySelectorAll('#admin-music-playlist li').length;
+    if (currentCount >= limit) {
+      showToast(`عذراً، الباقة الحالية تسمح بحد أقصى ${limit} ملفات موسيقى فقط! ⚠️`);
+      return;
+    }
+
     const titleInput = document.getElementById('music-track-title');
     const fileInput = document.getElementById('music-track-file');
     const title = titleInput.value.trim();
@@ -1034,6 +1183,14 @@ function setupActionListeners() {
   document.getElementById('admin-btn-add-dream').onclick = () => openModal('modal-add-dream');
   document.getElementById('form-add-dream').onsubmit = async (e) => {
     e.preventDefault();
+    const tier = getCurrentTenantTier();
+    const limit = TIER_LIMITS[tier]?.dreams || 5;
+    const currentCount = document.querySelectorAll('#admin-dreams-list .creator-stage-item').length;
+    if (currentCount >= limit) {
+      showToast(`عذراً، الباقة الحالية تسمح بحد أقصى ${limit} أحلام فقط! ⚠️`);
+      return;
+    }
+
     const title = document.getElementById('dream-title').value;
     const desc = document.getElementById('dream-desc').value;
 
@@ -1052,6 +1209,14 @@ function setupActionListeners() {
   document.getElementById('admin-btn-add-memory').onclick = () => openModal('modal-add-memory');
   document.getElementById('form-add-memory').onsubmit = async (e) => {
     e.preventDefault();
+    const tier = getCurrentTenantTier();
+    const limit = TIER_LIMITS[tier]?.memories || 8;
+    const currentCount = document.querySelectorAll('#admin-memories-list .creator-stage-item').length;
+    if (currentCount >= limit) {
+      showToast(`عذراً، الباقة الحالية تسمح بحد أقصى ${limit} ذكريات فقط! ⚠️`);
+      return;
+    }
+
     const title = document.getElementById('memory-title').value;
     const date = document.getElementById('memory-date').value;
     const desc = document.getElementById('memory-desc').value;
@@ -1082,6 +1247,14 @@ function setupActionListeners() {
   document.getElementById('admin-btn-add-photo').onclick = () => openModal('modal-add-photo');
   document.getElementById('form-add-photo').onsubmit = async (e) => {
     e.preventDefault();
+    const tier = getCurrentTenantTier();
+    const limit = TIER_LIMITS[tier]?.photos || 10;
+    const currentCount = document.querySelectorAll('#admin-gallery-list .gallery-card').length;
+    if (currentCount >= limit) {
+      showToast(`عذراً، الباقة الحالية تسمح بحد أقصى ${limit} صور معرض فقط! ⚠️`);
+      return;
+    }
+
     const file = document.getElementById('gallery-file').files[0];
     const caption = document.getElementById('gallery-caption').value;
 
@@ -1106,6 +1279,14 @@ function setupActionListeners() {
   };
   document.getElementById('form-add-date').onsubmit = async (e) => {
     e.preventDefault();
+    const tier = getCurrentTenantTier();
+    const limit = TIER_LIMITS[tier]?.dates || 5;
+    const currentCount = document.querySelectorAll('#admin-dates-list .creator-stage-item').length;
+    if (currentCount >= limit) {
+      showToast(`عذراً، الباقة الحالية تسمح بحد أقصى ${limit} مواعيد فقط! ⚠️`);
+      return;
+    }
+
     const title = document.getElementById('date-title').value;
     const val = document.getElementById('date-value').value;
     const isMilestone = document.getElementById('date-is-milestone').checked;

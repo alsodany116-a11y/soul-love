@@ -66,6 +66,8 @@ export async function setTenantBySlug(slug) {
       adminPasswordHash: data.admin_password_hash,
       tenantSupabaseUrl: data.tenant_supabase_url,
       tenantSupabaseAnonKey: data.tenant_supabase_anon_key,
+      price: data.price || 0,
+      tier: data.tier || 1,
       createdAt: data.created_at
     };
     return currentTenantDetails;
@@ -93,6 +95,13 @@ export function getSupabase() {
  */
 export function getCurrentTenantSlug() {
   return currentTenantSlug;
+}
+
+/**
+ * Gets the current active tenant tier.
+ */
+export function getCurrentTenantTier() {
+  return currentTenantDetails ? currentTenantDetails.tier : 1;
 }
 
 /**
