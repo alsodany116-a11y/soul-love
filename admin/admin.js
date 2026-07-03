@@ -104,14 +104,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         return localDate === filterDateVal;
       });
       const daySales = matched.reduce((sum, s) => sum + (parseFloat(s.price) || 0), 0);
-      output.innerHTML = `<i class="fa-solid fa-calculator"></i> المساحات: ${matched.length} | المبيعات: $${daySales.toFixed(2)}`;
+      output.innerHTML = `<i class="fa-solid fa-calculator"></i> المساحات: ${matched.length} | المبيعات: ${daySales.toFixed(2)} ج.م`;
       output.style.display = 'block';
     };
   }
 
   const urlParams = new URLSearchParams(window.location.search);
   let spaceSlug = urlParams.get('space');
-  if (!spaceSlug && window.location.hash) {
+  if (!spaceSlug && window.location.hash && window.location.hash !== '#master') {
     spaceSlug = window.location.hash.replace('#', '').replace('/', '').trim();
   }
 
@@ -131,34 +131,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
       console.error(err);
       alert(err.message || "فشل ربط قاعدة بيانات المساحة.");
-      window.location.href = './'; // Redirect to master dashboard login
+      window.location.href = '../'; // Redirect to user welcome page
     }
   } else {
     // Master Admin Mode
+    const isMasterHash = (window.location.hash === '#master');
     const isMasterUnlocked = sessionStorage.getItem('unlocked_master') === 'true';
-    if (isMasterUnlocked) {
-      const spaceId = urlParams.get('spaceId');
-      if (spaceId) {
-        currentSpaceId = spaceId;
-        // Fetch slug from registry to set tenant context
-        try {
-          const master = getSupabase(); // default client is master
-          const { data, error } = await master.from('spaces_registry').select('slug').eq('id', spaceId).single();
-          if (data) {
-            await setTenantBySlug(data.slug);
-            await revealAdminPanel(false); // Master mode
-          } else {
-            revealDashboard();
-          }
-        } catch (err) {
-          console.error(err);
-          revealDashboard();
-        }
-      } else {
+
+    if (isMasterUnlocked || isMasterHash) {
+      if (isMasterUnlocked) {
         revealDashboard();
+      } else {
+        revealMasterLogin();
       }
     } else {
-      revealMasterLogin();
+      // Redirect to user landing page - completely hiding the master login!
+      window.location.href = '../';
     }
   }
 });
@@ -169,7 +157,7 @@ function revealSpaceLogin(slug) {
 
   // Apply default theme styles
   applyThemeStyles('rose_garden', document.documentElement);
-  startThemeAnimation('rose_garden', document.getElementById('theme-canvas'));
+  stopThemeAnimation();
 
   const form = document.getElementById('form-space-login');
   const errorMsg = document.getElementById('space-login-error');
@@ -201,7 +189,7 @@ function revealMasterLogin() {
 
   // Apply beautiful default theme (rose_garden) & animations
   applyThemeStyles('rose_garden', document.documentElement);
-  startThemeAnimation('rose_garden', document.getElementById('theme-canvas'));
+  stopThemeAnimation();
 
   const form = document.getElementById('form-master-login');
   const errorMsg = document.getElementById('master-login-error');
@@ -250,15 +238,18 @@ function revealDashboard() {
 
   // Apply beautiful default theme (rose_garden) & animations
   applyThemeStyles('rose_garden', document.documentElement);
-  startThemeAnimation('rose_garden', document.getElementById('theme-canvas'));
+  stopThemeAnimation();
 
   loadDashboardSpaces();
 
   const modalCreate = document.getElementById('modal-admin-create');
-  document.getElementById('dashboard-btn-create').onclick = () => {
+  const openCreateModal = () => {
     document.getElementById('form-admin-create').reset();
     modalCreate.classList.remove('hidden');
   };
+  document.getElementById('dashboard-btn-create').onclick = openCreateModal;
+  const mobileCreateBtn = document.getElementById('dashboard-btn-create-mobile');
+  if (mobileCreateBtn) mobileCreateBtn.onclick = openCreateModal;
 
   document.getElementById('dashboard-btn-logout').onclick = () => {
     if (confirm("هل تريد تسجيل الخروج؟")) {
@@ -323,7 +314,7 @@ async function loadDashboardSpaces() {
     // Calculate and Update Master Stats Sales
     const totalSales = allSpacesCached.reduce((sum, s) => sum + (parseFloat(s.price) || 0), 0);
     const salesEl = document.getElementById('master-stats-sales');
-    if (salesEl) salesEl.textContent = "$" + totalSales.toFixed(2);
+    if (salesEl) salesEl.textContent = totalSales.toFixed(2) + " ج.م";
 
     renderSpacesList();
   } catch (err) {
@@ -377,7 +368,7 @@ function renderSpacesList() {
       </td>
       <td style="padding: 12px 8px; color: #555;">${dateStr}</td>
       <td style="padding: 12px 8px; text-align: center; font-weight: bold; color: var(--progress-bar-color);">${tierName}</td>
-      <td style="padding: 12px 8px; text-align: center; font-weight: bold; color: #2e7d32;">$${parseFloat(s.price).toFixed(2)}</td>
+      <td style="padding: 12px 8px; text-align: center; font-weight: bold; color: #2e7d32;">${parseFloat(s.price).toFixed(2)} ج.م</td>
       <td style="padding: 12px 8px; text-align: center;">
         <button class="btn-small btn-secondary btn-delete-space" data-id="${s.id}" style="background-color: #fa3e3e; color: white; border-color: #fa3e3e;"><i class="fa-solid fa-trash-can"></i> حذف</button>
       </td>
@@ -389,9 +380,9 @@ function renderSpacesList() {
   container.querySelectorAll('.btn-copy-space-id').forEach(btn => {
     btn.onclick = () => {
       const slug = btn.getAttribute('data-slug');
-      const playUrl = `${window.location.origin}/#play/${slug}`;
-      navigator.clipboard.writeText(playUrl);
-      showToast("تم نسخ رابط اللعب المختصر! 📋");
+      const adminUrl = `${window.location.origin}/admin/#${slug}`;
+      navigator.clipboard.writeText(adminUrl);
+      showToast("تم نسخ رابط لوحة تحكم العميل! 📋");
     };
   });
 
@@ -606,11 +597,7 @@ async function loadGameConfigs() {
 
       // Apply loaded theme styles & animations
       applyThemeStyles(activeTheme, document.documentElement, customizationOverrides);
-      if (customizationOverrides.particlesEnabled !== false) {
-        startThemeAnimation(activeTheme, document.getElementById('theme-canvas'));
-      } else {
-        stopThemeAnimation();
-      }
+      stopThemeAnimation();
     } else {
       stages = [];
       activeTheme = 'rose_garden';
@@ -620,7 +607,7 @@ async function loadGameConfigs() {
 
       // Apply default theme styles & animations
       applyThemeStyles('rose_garden', document.documentElement);
-      startThemeAnimation('rose_garden', document.getElementById('theme-canvas'));
+      stopThemeAnimation();
     }
 
     renderStagesList();
@@ -1018,11 +1005,7 @@ function setupActionListeners() {
       
       const currentOverrides = readStylingSliders();
       applyThemeStyles(activeTheme, document.documentElement, currentOverrides);
-      if (currentOverrides.particlesEnabled !== false) {
-        startThemeAnimation(activeTheme, document.getElementById('theme-canvas'));
-      } else {
-        stopThemeAnimation();
-      }
+      stopThemeAnimation();
       showToast("تم تطبيق السمات الجاهزة 🎨");
     };
   });
@@ -1032,11 +1015,7 @@ function setupActionListeners() {
     input.oninput = input.onchange = () => {
       const currentOverrides = readStylingSliders();
       applyThemeStyles(activeTheme, document.documentElement, currentOverrides);
-      if (currentOverrides.particlesEnabled !== false) {
-        startThemeAnimation(activeTheme, document.getElementById('theme-canvas'));
-      } else {
-        stopThemeAnimation();
-      }
+      stopThemeAnimation();
     };
   });
 
@@ -1481,6 +1460,11 @@ function initFlatpickr() {
       disableMobile: true
     });
     window.flatpickr("#memory-date", {
+      locale: "ar",
+      dateFormat: "Y-m-d",
+      disableMobile: true
+    });
+    window.flatpickr("#filter-stats-date", {
       locale: "ar",
       dateFormat: "Y-m-d",
       disableMobile: true

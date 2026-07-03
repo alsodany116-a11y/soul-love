@@ -1,6 +1,6 @@
 const CACHE_NAME = 'love-hunt-admin-v1';
 const ASSETS = [
-  './index.html',
+  './index.htm',
   './admin.js',
   '../style.css',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
