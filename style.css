@@ -2146,4 +2146,284 @@ input:focus, select:focus, textarea:focus {
   }
 }
 
+/* Master Dashboard Sidebar Drawer Styles */
+.sidebar-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2000;
+  transition: all 0.3s ease;
+}
+
+.sidebar-drawer.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.drawer-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+.drawer-content {
+  position: absolute;
+  top: 0;
+  right: 0; /* Slide from right for RTL layout */
+  left: auto;
+  width: 80%;
+  max-width: 320px;
+  height: 100%;
+  background: white;
+  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateX(100%);
+}
+
+.sidebar-drawer:not(.hidden) .drawer-content {
+  transform: translateX(0);
+}
+
+.drawer-header {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.drawer-header h3 {
+  margin: 0;
+  font-weight: 800;
+  color: #333;
+}
+
+.drawer-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #777;
+  cursor: pointer;
+}
+
+.drawer-body {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.drawer-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.drawer-menu-item {
+  width: 100%;
+  padding: 12px 16px;
+  background: #fdfdfd;
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #555;
+  text-align: right;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.drawer-menu-item i {
+  width: 20px;
+  text-align: center;
+}
+
+.drawer-menu-item:hover {
+  background: #fff5f7;
+  color: var(--progress-bar-color);
+  border-color: #ffd3db;
+}
+
+.drawer-menu-item.active {
+  background: var(--progress-bar-color);
+  color: white;
+  border-color: var(--progress-bar-color);
+}
+
+/* Floating Action Button (FAB) */
+.dashboard-fab-btn {
+  position: fixed;
+  bottom: 25px;
+  left: 25px; /* Bottom left corner for FAB on mobile */
+  right: auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--progress-bar-color), #ad1457);
+  color: white;
+  border: none;
+  font-size: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(216, 27, 96, 0.35);
+  cursor: pointer;
+  z-index: 999;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.dashboard-fab-btn:hover {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 0 8px 25px rgba(216, 27, 96, 0.45);
+}
+
+.dashboard-fab-btn:active {
+  transform: scale(0.95);
+}
+
+/* Spaces Accordion Cards */
+.spaces-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.space-accordion-card {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 14px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.space-card-header {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  background: #fafafa;
+}
+
+.space-card-header h4 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #333;
+}
+
+.space-card-toggle-icon {
+  font-size: 0.95rem;
+  color: #888;
+  transition: transform 0.3s ease;
+}
+
+.space-accordion-card.expanded .space-card-toggle-icon {
+  transform: rotate(180deg);
+  color: var(--progress-bar-color);
+}
+
+.space-card-details-body {
+  padding: 20px;
+  border-top: 1px dashed #eee;
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  background: white;
+}
+
+.space-accordion-card.expanded .space-card-details-body {
+  display: flex;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #f9f9f9;
+  padding-bottom: 8px;
+}
+
+.detail-label {
+  color: #777;
+  font-weight: 600;
+}
+
+.detail-value {
+  color: #222;
+  font-weight: 700;
+}
+
+.space-card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.space-card-actions button, .space-card-actions a {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+}
+
+.space-card-btn-manage {
+  background: var(--progress-bar-color);
+  color: white !important;
+}
+
+.space-card-btn-manage:hover {
+  background: #ad1457;
+}
+
+.space-card-btn-delete {
+  background: #ffebee;
+  color: #c62828 !important;
+}
+
+.space-card-btn-delete:hover {
+  background: #ffcdd2;
+}
+
+/* Hamburger button in header */
+.hamburger-btn {
+  background: none;
+  border: none;
+  font-size: 1.45rem;
+  color: var(--progress-bar-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.hamburger-btn:hover {
+  background: rgba(216, 27, 96, 0.05);
+}
+
+
 

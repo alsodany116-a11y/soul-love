@@ -89,6 +89,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   }
 
+  // Drawer Toggles for Master Dashboard
+  const hamburgerBtn = document.getElementById('master-hamburger-btn');
+  const drawer = document.getElementById('master-sidebar-drawer');
+  const drawerCloseBtn = document.getElementById('drawer-close-btn');
+  const drawerOverlay = drawer ? drawer.querySelector('.drawer-overlay') : null;
+
+  if (hamburgerBtn && drawer) {
+    hamburgerBtn.onclick = () => {
+      drawer.classList.remove('hidden');
+    };
+    const closeDrawer = () => {
+      drawer.classList.add('hidden');
+    };
+    if (drawerCloseBtn) drawerCloseBtn.onclick = closeDrawer;
+    if (drawerOverlay) drawerOverlay.onclick = closeDrawer;
+
+    // Drawer menu item actions
+    const btnMenuSpaces = document.getElementById('drawer-menu-spaces');
+    const btnMenuSettings = document.getElementById('drawer-menu-settings');
+    const btnMenuLogout = document.getElementById('drawer-menu-logout');
+    const settingsFormWrapper = document.getElementById('drawer-settings-form-wrapper');
+
+    if (btnMenuSpaces && btnMenuSettings && btnMenuLogout) {
+      btnMenuSpaces.onclick = () => {
+        btnMenuSpaces.classList.add('active');
+        btnMenuSettings.classList.remove('active');
+        if (settingsFormWrapper) settingsFormWrapper.classList.add('hidden');
+        closeDrawer();
+      };
+
+      btnMenuSettings.onclick = () => {
+        btnMenuSettings.classList.add('active');
+        btnMenuSpaces.classList.remove('active');
+        if (settingsFormWrapper) settingsFormWrapper.classList.remove('hidden');
+      };
+
+      btnMenuLogout.onclick = () => {
+        closeDrawer();
+        const logoutBtn = document.getElementById('dashboard-btn-logout');
+        if (logoutBtn) logoutBtn.click();
+      };
+    }
+  }
+
   // Date Filter Trigger for stats
   const btnFilterDate = document.getElementById('btn-filter-stats-date');
   if (btnFilterDate) {
@@ -241,7 +285,10 @@ function revealDashboard() {
     document.getElementById('form-admin-create').reset();
     modalCreate.classList.remove('hidden');
   };
-  document.getElementById('dashboard-btn-create').onclick = openCreateModal;
+  const createBtn = document.getElementById('dashboard-btn-create');
+  if (createBtn) createBtn.onclick = openCreateModal;
+  const fabCreateBtn = document.getElementById('dashboard-fab-create');
+  if (fabCreateBtn) fabCreateBtn.onclick = openCreateModal;
   const mobileCreateBtn = document.getElementById('dashboard-btn-create-mobile');
   if (mobileCreateBtn) mobileCreateBtn.onclick = openCreateModal;
 
@@ -319,7 +366,7 @@ async function loadDashboardSpaces() {
 }
 
 function renderSpacesList() {
-  const container = document.getElementById('dashboard-spaces-list');
+  const container = document.getElementById('dashboard-spaces-cards');
   if (!container) return;
   container.innerHTML = '';
 
@@ -336,13 +383,13 @@ function renderSpacesList() {
   }
 
   if (spacesToRender.length === 0) {
-    container.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #777;">لا توجد مساحات حب مطابقة للتصفية الحالية.</td></tr>';
+    container.innerHTML = '<div class="info-alert" style="text-align: center;">لا توجد مساحات حب مطابقة للتصفية الحالية.</div>';
     return;
   }
 
   spacesToRender.forEach(s => {
-    const tr = document.createElement('tr');
-    tr.style.borderBottom = '1px solid #eee';
+    const card = document.createElement('div');
+    card.className = 'space-accordion-card';
 
     const dateStr = new Date(s.createdAt).toLocaleDateString('ar-EG', {
       year: 'numeric', month: 'long', day: 'numeric'
@@ -355,24 +402,55 @@ function renderSpacesList() {
     };
     const tierName = tierNames[s.tier] || `باقة ${s.tier}`;
 
-    tr.innerHTML = `
-      <td style="padding: 12px 8px; font-weight: bold; color: var(--progress-bar-color); font-family: sans-serif;">
-        ${s.slug}
-        <button class="btn-copy-space-id" data-slug="${s.slug}" style="background: none; border: none; cursor: pointer; color: #888; margin-right: 5px;" title="نسخ رابط اللعب المختصر"><i class="fa-solid fa-copy"></i></button>
-      </td>
-      <td style="padding: 12px 8px; color: #555;">${dateStr}</td>
-      <td style="padding: 12px 8px; text-align: center; font-weight: bold; color: var(--progress-bar-color);">${tierName}</td>
-      <td style="padding: 12px 8px; text-align: center; font-weight: bold; color: #2e7d32;">${parseFloat(s.price).toFixed(2)} ج.م</td>
-      <td style="padding: 12px 8px; text-align: center;">
-        <button class="btn-small btn-secondary btn-delete-space" data-id="${s.id}" style="background-color: #fa3e3e; color: white; border-color: #fa3e3e;"><i class="fa-solid fa-trash-can"></i> حذف</button>
-      </td>
+    card.innerHTML = `
+      <div class="space-card-header">
+        <h4>${escapeHTML(s.slug)}</h4>
+        <i class="fa-solid fa-chevron-down space-card-toggle-icon"></i>
+      </div>
+      <div class="space-card-details-body">
+        <div class="detail-row">
+          <span class="detail-label">نوع الباقة:</span>
+          <span class="detail-value">${tierName}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">تاريخ الإنشاء:</span>
+          <span class="detail-value">${dateStr}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">السعر:</span>
+          <span class="detail-value">${parseFloat(s.price).toFixed(2)} ج.م</span>
+        </div>
+        <div class="space-card-actions">
+          <button class="space-card-btn-manage" data-slug="${s.slug}" data-id="${s.id}">
+            <i class="fa-solid fa-screwdriver-wrench"></i> إدارة المساحة
+          </button>
+          <button class="btn-copy-space-id" data-slug="${s.slug}" style="background: #eef2f7; color: #444;">
+            <i class="fa-solid fa-copy"></i> نسخ الرابط
+          </button>
+          <button class="space-card-btn-delete" data-id="${s.id}">
+            <i class="fa-solid fa-trash-can"></i> حذف
+          </button>
+        </div>
+      </div>
     `;
-    container.appendChild(tr);
+
+    // Toggle expand/collapse on header click
+    card.querySelector('.space-card-header').onclick = () => {
+      const isExpanded = card.classList.contains('expanded');
+      // Collapse all other cards first
+      container.querySelectorAll('.space-accordion-card').forEach(c => c.classList.remove('expanded'));
+      if (!isExpanded) {
+        card.classList.add('expanded');
+      }
+    };
+
+    container.appendChild(card);
   });
 
   // Bind copy listeners
   container.querySelectorAll('.btn-copy-space-id').forEach(btn => {
-    btn.onclick = () => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
       const slug = btn.getAttribute('data-slug');
       const adminUrl = `${window.location.origin}/admin/#${slug}`;
       navigator.clipboard.writeText(adminUrl);
@@ -380,9 +458,28 @@ function renderSpacesList() {
     };
   });
 
+  // Bind manage/edit listeners
+  container.querySelectorAll('.space-card-btn-manage').forEach(btn => {
+    btn.onclick = async (e) => {
+      e.stopPropagation();
+      const slug = btn.getAttribute('data-slug');
+      const id = btn.getAttribute('data-id');
+      showToast("جاري تحميل مساحة الحب... ⏳");
+      try {
+        currentSpaceId = id;
+        await setTenantBySlug(slug);
+        await revealAdminPanel(false); // Open in Master Edit Mode
+      } catch (err) {
+        console.error(err);
+        showToast("حدث خطأ أثناء تحميل المساحة: " + err.message);
+      }
+    };
+  });
+
   // Bind delete listeners
-  container.querySelectorAll('.btn-delete-space').forEach(btn => {
-    btn.onclick = async () => {
+  container.querySelectorAll('.space-card-btn-delete').forEach(btn => {
+    btn.onclick = async (e) => {
+      e.stopPropagation();
       const id = btn.getAttribute('data-id');
       if (confirm("⚠️ هل أنت متأكد من حذف هذه المساحة نهائياً؟ سيتم مسح كافة الألغاز والذكريات والصور والموسيقى الخاصة بها بشكل لا يمكن استرجاعه!")) {
         showToast("جاري حذف المساحة...");

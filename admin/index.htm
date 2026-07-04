@@ -119,108 +119,97 @@
   <!-- ========================================== -->
   <!-- 1. ADMIN MASTER DASHBOARD                  -->
   <!-- ========================================== -->
-  <section id="admin-screen-dashboard" class="creator-container hidden" style="max-width: 1200px; margin: 0 auto; padding: 30px 20px;">
+  <section id="admin-screen-dashboard" class="creator-container hidden" style="max-width: 800px; margin: 0 auto; padding: 20px 15px;">
+    
+    <!-- Slide-out Sidebar Drawer -->
+    <div id="master-sidebar-drawer" class="sidebar-drawer hidden">
+      <div class="drawer-overlay"></div>
+      <div class="drawer-content">
+        <div class="drawer-header">
+          <h3>خيارات المدير ⚙️</h3>
+          <button type="button" id="drawer-close-btn" class="drawer-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="drawer-body">
+          <div class="drawer-menu-list">
+            <button type="button" class="drawer-menu-item active" id="drawer-menu-spaces"><i class="fa-solid fa-heart-pulse"></i> إدارة المساحات</button>
+            <button type="button" class="drawer-menu-item" id="drawer-menu-settings"><i class="fa-solid fa-key"></i> تغيير كلمة المرور</button>
+            <button type="button" class="drawer-menu-item" id="drawer-menu-logout" style="color: #c62828;"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+          </div>
+          
+          <!-- Hidden Password Form inside drawer -->
+          <div id="drawer-settings-form-wrapper" class="hidden" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee;">
+            <h4 style="margin-bottom: 15px; font-weight: 800;"><i class="fa-solid fa-lock"></i> تغيير كلمة المرور الرئيسية</h4>
+            <form id="form-change-master-password">
+              <div class="form-group">
+                <label for="new-master-password">كلمة المرور الجديدة</label>
+                <div class="input-password-wrapper">
+                  <input type="password" id="new-master-password" required placeholder="أدخل رمز المرور الجديد..." minlength="4">
+                  <button type="button" class="btn-toggle-password"><i class="fa-regular fa-eye"></i></button>
+                </div>
+              </div>
+              <button type="submit" class="btn-primary btn-block" style="padding: 10px;"><i class="fa-solid fa-floppy-disk"></i> تغيير رمز المرور</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Header -->
-    <header class="creator-header">
-      <div class="creator-header-left">
-        <h1>لوحة التحكم العامة للأدمن 📊</h1>
-        <p class="help-text">إدارة جميع مساحات الحب النشطة والتحليلات وتعديلها أو حذفها.</p>
+    <header class="creator-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+      <div class="creator-header-left" style="display: flex; align-items: center; gap: 12px;">
+        <button type="button" id="master-hamburger-btn" class="hamburger-btn"><i class="fa-solid fa-bars"></i></button>
+        <h1 style="font-size: 1.3rem; font-weight: 800; margin: 0;">لوحة الإدارة الرئيسية ⚙️</h1>
       </div>
-      <div class="creator-header-right">
-        <button id="dashboard-btn-create" class="btn-primary"><i class="fa-solid fa-plus"></i> إنشاء مساحة حب جديدة</button>
-        <button id="dashboard-btn-logout" class="btn-secondary"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
-      </div>
+      <div style="font-size: 0.85rem; font-weight: bold; color: #777;" id="master-header-subtitle">صيد الحب</div>
+      <!-- Hidden master logout to trigger from drawer -->
+      <button id="dashboard-btn-logout" class="hidden"></button>
     </header>
 
     <!-- Circular Analytics Dashboard Cards -->
-    <div class="stats-panel-grid" style="margin-top: 25px; display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; align-items: center;">
+    <div class="stats-panel-grid" style="margin-top: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; align-items: center;">
       <!-- Circle 1: Spaces Count -->
       <div class="stat-circle-wrapper" style="text-align: center;">
-        <div class="stat-circle" style="width: 140px; height: 140px; border-radius: 50%; border: 4px solid var(--progress-bar-color); display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; box-shadow: 0 10px 25px rgba(216, 27, 96, 0.08);">
-          <span class="stat-number" id="master-stats-count" style="font-size: 2.2rem; font-weight: 900; color: var(--progress-bar-color);">0</span>
+        <div class="stat-circle" style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--progress-bar-color); display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; box-shadow: 0 8px 20px rgba(216, 27, 96, 0.06);">
+          <span class="stat-number" id="master-stats-count" style="font-size: 1.8rem; font-weight: 900; color: var(--progress-bar-color);">0</span>
         </div>
-        <span class="stat-label" style="display: block; font-size: 0.9rem; font-weight: 700; color: #444; margin-top: 8px;">إجمالي مساحات الحب</span>
+        <span class="stat-label" style="display: block; font-size: 0.8rem; font-weight: 700; color: #444; margin-top: 6px;">إجمالي المساحات</span>
       </div>
 
       <!-- Circle 2: Total Revenue -->
       <div class="stat-circle-wrapper" style="text-align: center;">
-        <div class="stat-circle" style="width: 140px; height: 140px; border-radius: 50%; border: 4px solid #2e7d32; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; box-shadow: 0 10px 25px rgba(46, 125, 50, 0.08);">
-          <span class="stat-number" id="master-stats-sales" style="font-size: 1.35rem; font-weight: 900; color: #2e7d32; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; direction: rtl;">0.00 ج.م</span>
+        <div class="stat-circle" style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid #2e7d32; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; box-shadow: 0 8px 20px rgba(46, 125, 50, 0.06);">
+          <span class="stat-number" id="master-stats-sales" style="font-size: 1.1rem; font-weight: 900; color: #2e7d32; white-space: nowrap; max-width: 100px; overflow: hidden; text-overflow: ellipsis; direction: rtl;">0.00 ج.م</span>
         </div>
-        <span class="stat-label" style="display: block; font-size: 0.9rem; font-weight: 700; color: #444; margin-top: 8px;">إجمالي الأرباح والمبيعات</span>
+        <span class="stat-label" style="display: block; font-size: 0.8rem; font-weight: 700; color: #444; margin-top: 6px;">إجمالي المبيعات</span>
       </div>
 
       <!-- Card 3: Date Filter -->
-      <div class="stat-card" style="background: white; padding: 20px; border-radius: 16px; border: 1px solid #e5e5e5; box-shadow: 0 10px 30px rgba(0,0,0,0.01); display: flex; flex-direction: column; justify-content: center; gap: 8px; min-width: 260px; height: 140px;">
-        <label for="filter-stats-date" style="font-weight: 700; font-size: 0.85rem; color: #555;"><i class="fa-solid fa-calendar-day"></i> مبيعات يوم محدد</label>
+      <div class="stat-card" style="background: white; padding: 15px; border-radius: 14px; border: 1px solid #e5e5e5; box-shadow: 0 5px 15px rgba(0,0,0,0.01); display: flex; flex-direction: column; justify-content: center; gap: 6px; min-width: 220px; height: 120px;">
+        <label for="filter-stats-date" style="font-weight: 700; font-size: 0.8rem; color: #555;"><i class="fa-solid fa-calendar-day"></i> مبيعات يوم محدد</label>
         <div style="display: flex; gap: 8px;">
-          <input type="text" id="filter-stats-date" placeholder="اختر تاريخاً..." readonly style="padding: 8px 12px; border-radius: var(--border-radius); border: 2px solid var(--input-border-color); font-size: 0.85rem; flex: 1; text-align: center; background-color: white; cursor: pointer;">
-          <button id="btn-filter-stats-date" class="btn-primary" style="padding: 8px 14px; font-size: 0.85rem;"><i class="fa-solid fa-magnifying-glass"></i></button>
+          <input type="text" id="filter-stats-date" placeholder="اختر تاريخاً..." readonly style="padding: 6px 10px; border-radius: var(--border-radius); border: 2px solid var(--input-border-color); font-size: 0.8rem; flex: 1; text-align: center; background-color: white; cursor: pointer;">
+          <button type="button" id="btn-filter-stats-date" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem;"><i class="fa-solid fa-magnifying-glass"></i></button>
         </div>
-        <span id="filtered-stats-output" style="font-size: 0.8rem; font-weight: bold; color: #555; display: none;"></span>
+        <span id="filtered-stats-output" style="font-size: 0.75rem; font-weight: bold; color: #555; display: none;"></span>
       </div>
     </div>
 
-    <!-- Centered Mobile Create Space Button -->
-    <div style="text-align: center; margin-top: 25px;">
-      <button id="dashboard-btn-create-mobile" class="btn-primary" style="padding: 12px 28px; font-size: 1rem; border-radius: 30px; font-weight: 800; box-shadow: 0 6px 20px rgba(216, 27, 96, 0.2);"><i class="fa-solid fa-heart-circle-plus"></i> إنشاء مساحة حب جديدة</button>
-    </div>
-
-    <div class="admin-layout-grid" style="margin-top: 25px; display: grid; grid-template-columns: 2fr 1fr; gap: 25px;">
-      
-      <!-- Spaces Table -->
-      <div style="background: white; border-radius: 16px; border: 1px solid #e5e5e5; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); overflow: hidden;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f5f5f5; padding-bottom: 8px;">
-          <h3 style="font-weight: 800; margin: 0;"><i class="fa-solid fa-heart-pulse" style="color: var(--progress-bar-color);"></i> إدارة المساحات</h3>
-          <div style="display: flex; gap: 8px;" id="dashboard-list-tabs">
-            <button id="dashboard-tab-recent" class="btn-small btn-primary" style="background-color: var(--progress-bar-color); border-color: var(--progress-bar-color);">آخر 5 مساحات (24س)</button>
-            <button id="dashboard-tab-all" class="btn-small btn-secondary">كل المساحات والأرشيف 📂</button>
-          </div>
-        </div>
-        
-        <div style="overflow-x: auto;">
-          <table style="width: 100%; border-collapse: collapse; text-align: right;">
-            <thead>
-              <tr style="border-bottom: 2px solid #eee; font-weight: bold; color: #555;">
-                <th style="padding: 12px 8px;">الاسم الفرعي (Slug)</th>
-                <th style="padding: 12px 8px;">تاريخ الإنشاء</th>
-                <th style="padding: 12px 8px; text-align: center;">الباقة / الاشتراك</th>
-                <th style="padding: 12px 8px; text-align: center;">السعر Paid</th>
-                <th style="padding: 12px 8px; text-align: center;">الإجراءات</th>
-              </tr>
-            </thead>
-            <tbody id="dashboard-spaces-list">
-              <!-- Dynamically populated rows -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Settings Sidebar -->
-      <div style="display: flex; flex-direction: column; gap: 20px;">
-        <!-- Change Master Password Card -->
-        <div style="background: white; border-radius: 16px; border: 1px solid #e5e5e5; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
-          <h3 style="margin-bottom: 15px; font-weight: 800; border-bottom: 2px solid #f5f5f5; padding-bottom: 8px;"><i class="fa-solid fa-key" style="color: #d81b60;"></i> كلمة المرور الرئيسية</h3>
-          <form id="form-change-master-password">
-            <div class="form-group">
-              <label for="new-master-password">كلمة المرور الجديدة</label>
-              <div class="input-password-wrapper">
-                <input type="password" id="new-master-password" required placeholder="أدخل رمز المرور الجديد..." minlength="4">
-                <button type="button" class="btn-toggle-password"><i class="fa-regular fa-eye"></i></button>
-              </div>
-            </div>
-            <button type="submit" class="btn-primary btn-block"><i class="fa-solid fa-floppy-disk"></i> تغيير رمز المرور</button>
-          </form>
-        </div>
-
-        <!-- Quick Info Card -->
-        <div style="background: white; border-radius: 16px; border: 1px solid #e5e5e5; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); color: #555;">
-          <h4 style="font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-info-circle"></i> تعليمات الاستخدام</h4>
-          <p style="font-size: 0.9rem; line-height: 1.5; margin-bottom: 8px;">يمكنك الضغط على <strong>"إدارة"</strong> للدخول لمحرر المساحة لتعديل ألغازها وصورها ونصوصها مباشرة دون الحاجة لكلمة مرور فرعية.</p>
-          <p style="font-size: 0.9rem; line-height: 1.5;">حذف مساحة معينة سيقوم بمسح كافة الذكريات والموسيقى والمحتويات الخاصة بها نهائياً.</p>
-        </div>
+    <!-- Tabs selector header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid #f5f5f5; padding-bottom: 8px;">
+      <h3 style="font-weight: 800; font-size: 1.1rem; margin: 0;"><i class="fa-solid fa-heart-pulse" style="color: var(--progress-bar-color);"></i> المساحات</h3>
+      <div style="display: flex; gap: 6px;" id="dashboard-list-tabs">
+        <button type="button" id="dashboard-tab-recent" class="btn-small btn-primary" style="background-color: var(--progress-bar-color); border-color: var(--progress-bar-color); font-size: 0.75rem; padding: 6px 10px;">الأخيرة</button>
+        <button type="button" id="dashboard-tab-all" class="btn-small btn-secondary" style="font-size: 0.75rem; padding: 6px 10px;">الأرشيف 📂</button>
       </div>
     </div>
+
+    <!-- Accordion spaces card list -->
+    <div id="dashboard-spaces-cards" class="spaces-cards-list">
+      <!-- Loaded dynamically via admin.js -->
+    </div>
+
+    <!-- Floating Action Button (FAB) for creating new space -->
+    <button type="button" id="dashboard-fab-create" class="dashboard-fab-btn" title="إنشاء مساحة جديدة"><i class="fa-solid fa-plus"></i></button>
 
     <!-- Create Modal inside Dashboard -->
     <div id="modal-admin-create" class="modal hidden">
