@@ -135,18 +135,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   } else {
     // Master Admin Mode
-    const isMasterHash = (window.location.hash === '#master');
     const isMasterUnlocked = sessionStorage.getItem('unlocked_master') === 'true';
 
-    if (isMasterUnlocked || isMasterHash) {
-      if (isMasterUnlocked) {
-        revealDashboard();
-      } else {
-        revealMasterLogin();
-      }
+    if (isMasterUnlocked) {
+      revealDashboard();
     } else {
-      // Redirect to user landing page - completely hiding the master login!
-      window.location.href = '../';
+      revealMasterLogin();
     }
   }
 });

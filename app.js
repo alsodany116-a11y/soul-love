@@ -29,7 +29,14 @@ document.addEventListener('DOMContentLoaded', () => {
  * Client-Side Router. Evaluates URL hashes and activates matching screens.
  */
 async function router() {
-  const hash = window.location.hash || '#welcome';
+  const hash = window.location.hash;
+
+  // Redirect root landing page requests directly to admin dashboard
+  if (!hash || hash === '#welcome' || (!hash.startsWith('#play/') && !hash.startsWith('#journey/') && !hash.startsWith('#lock/'))) {
+    window.location.href = './admin/';
+    return;
+  }
+
   const parts = hash.split('/');
   const route = parts[0];
   const param = parts[1];
