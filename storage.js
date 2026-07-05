@@ -581,6 +581,25 @@ export async function saveMemory(spaceId, memory) {
   return data;
 }
 
+export async function updateMemory(memoryId, memory) {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error("Supabase not initialized.");
+
+  const record = {
+    title: memory.title,
+    date: memory.date,
+    description: memory.description,
+    photo_url: memory.photoUrl || null
+  };
+
+  const { error } = await supabase
+    .from('memories')
+    .update(record)
+    .eq('id', memoryId);
+
+  if (error) throw error;
+}
+
 export async function deleteMemory(memoryId) {
   const supabase = getSupabase();
   if (!supabase) throw new Error("Supabase not initialized.");
@@ -749,7 +768,8 @@ export async function fetchImportantDates(spaceId) {
   return data.map(d => ({
     id: d.id,
     title: d.title,
-    date: d.date
+    date: d.date,
+    isRecurring: d.is_recurring !== false
   }));
 }
 
@@ -760,7 +780,8 @@ export async function saveImportantDate(spaceId, dateItem) {
   const record = {
     couple_space_id: spaceId,
     title: dateItem.title,
-    date: dateItem.date
+    date: dateItem.date,
+    is_recurring: dateItem.isRecurring !== false
   };
 
   const { data, error } = await supabase
@@ -771,6 +792,24 @@ export async function saveImportantDate(spaceId, dateItem) {
 
   if (error) throw error;
   return data;
+}
+
+export async function updateImportantDate(dateId, dateItem) {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error("Supabase not initialized.");
+
+  const record = {
+    title: dateItem.title,
+    date: dateItem.date,
+    is_recurring: dateItem.isRecurring !== false
+  };
+
+  const { error } = await supabase
+    .from('important_dates')
+    .update(record)
+    .eq('id', dateId);
+
+  if (error) throw error;
 }
 
 export async function deleteImportantDate(dateId) {

@@ -78,19 +78,27 @@ body {
   width: 100%;
 }
 
+/* All screens are invisible by default - JS reveals the correct one */
 .app-screen {
   width: 100%;
   max-width: 1200px;
   min-height: 100vh;
   padding: 60px 20px 40px;
-  display: flex;
+  display: none;
   justify-content: center;
   align-items: center;
+}
+
+/* JS removes .hidden and adds .screen-active to show a screen */
+.app-screen:not(.hidden).screen-active,
+.app-screen.screen-active {
+  display: flex;
 }
 
 .hidden {
   display: none !important;
 }
+
 
 /* ============================================================================
    TYPOGRAPHY & GLOBAL CONTROLS

@@ -5,10 +5,10 @@ import {
   updateSpacePasswords,
   fetchMusicTracks, saveMusicTrack, deleteMusicTrack,
   saveGame, fetchGamesBySpace, uploadMedia,
-  fetchDreams, saveDream, toggleDreamAchieved, deleteDream,
-  fetchMemories, saveMemory, deleteMemory,
+  fetchDreams, saveDream, toggleDreamAchieved, deleteDream, updateDream,
+  fetchMemories, saveMemory, deleteMemory, updateMemory,
   fetchGallery, saveGalleryItem, deleteGalleryItem,
-  fetchImportantDates, saveImportantDate, deleteImportantDate,
+  fetchImportantDates, saveImportantDate, deleteImportantDate, updateImportantDate,
   DEFAULT_UI_TEXTS,
   verifyMasterPassword, updateMasterPassword, fetchAllSpaces, deleteCoupleSpace
 } from '../storage.js';
@@ -846,6 +846,11 @@ function openStageEditor(index) {
   document.getElementById('stage-media-upload-status').textContent = "لا يوجد ملف جديد";
   document.getElementById('stage-edit-media-url').value = "";
   
+  const chkWrapper = document.getElementById('stage-media-checkbox-wrapper');
+  const chkActive = document.getElementById('stage-media-active');
+  if (chkWrapper) chkWrapper.classList.add('hidden');
+  if (chkActive) chkActive.checked = false;
+
   const choicesWrapper = document.getElementById('stage-edit-options-wrapper');
   choicesWrapper.classList.add('hidden');
 
@@ -866,7 +871,9 @@ function openStageEditor(index) {
     document.getElementById('stage-edit-media-url').value = stage.mediaUrl || "";
 
     if (stage.mediaUrl) {
-      document.getElementById('stage-media-upload-status').textContent = "الصورة الحالية نشطة ✅";
+      if (chkWrapper) chkWrapper.classList.remove('hidden');
+      if (chkActive) chkActive.checked = true;
+      document.getElementById('stage-media-upload-status').textContent = "";
     }
 
     if (stage.type === 'multiple_choice') {
@@ -950,6 +957,7 @@ async function loadDreamsList() {
           </div>
         </div>
         <div class="stage-item-actions">
+          <button class="stage-action-btn dream-btn-edit" data-id="${d.id}" data-title="${escapeHTML(d.title)}" data-desc="${escapeHTML(d.description || '')}"><i class="fa-solid fa-pen-to-square"></i></button>
           <button class="stage-action-btn dream-btn-delete" data-id="${d.id}" style="color: #fa3e3e;"><i class="fa-solid fa-trash-can"></i></button>
         </div>
       `;
@@ -964,6 +972,21 @@ async function loadDreamsList() {
         await toggleDreamAchieved(id, checked);
         showToast(checked ? "تمت إضافة حلم لقائمة المنجزات! 🎉🌟" : "تم إعادة الحلم لقائمة الانتظار.");
         loadDreamsList();
+      };
+    });
+
+    // Edit
+    document.querySelectorAll('.dream-btn-edit').forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute('data-id');
+        const title = btn.getAttribute('data-title');
+        const desc = btn.getAttribute('data-desc');
+
+        document.getElementById('dream-edit-id').value = id;
+        document.getElementById('dream-title').value = title;
+        document.getElementById('dream-desc').value = desc;
+        document.getElementById('dream-modal-title').textContent = "تعديل الحلم المشترك ☁️";
+        openModal('modal-add-dream');
       };
     });
 
@@ -1010,10 +1033,34 @@ async function loadMemoriesList() {
           </div>
         </div>
         <div class="stage-item-actions">
+          <button class="stage-action-btn memory-btn-edit" data-id="${m.id}" data-title="${escapeHTML(m.title)}" data-date="${m.date}" data-desc="${escapeHTML(m.description || '')}" data-photourl="${m.photoUrl || ''}"><i class="fa-solid fa-pen-to-square"></i></button>
           <button class="stage-action-btn memory-btn-delete" data-id="${m.id}" style="color: #fa3e3e;"><i class="fa-solid fa-trash-can"></i></button>
         </div>
       `;
       container.appendChild(item);
+    });
+
+    // Edit Listener
+    document.querySelectorAll('.memory-btn-edit').forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute('data-id');
+        const title = btn.getAttribute('data-title');
+        const date = btn.getAttribute('data-date');
+        const desc = btn.getAttribute('data-desc');
+        const photoUrl = btn.getAttribute('data-photourl');
+
+        document.getElementById('edit-memory-id').value = id;
+        document.getElementById('edit-memory-photo-url').value = photoUrl;
+        document.getElementById('memory-title').value = title;
+        
+        const fp = document.getElementById('memory-date')._flatpickr;
+        if (fp) fp.setDate(date);
+        else document.getElementById('memory-date').value = date;
+
+        document.getElementById('memory-desc').value = desc;
+        document.querySelector('#modal-add-memory .modal-title').textContent = "تعديل الذكرى المخلدة 📝";
+        openModal('modal-add-memory');
+      };
     });
 
     document.querySelectorAll('.memory-btn-delete').forEach(btn => {
@@ -1095,8 +1142,8 @@ async function loadDatesList() {
       const item = document.createElement('div');
       item.className = 'creator-stage-item';
       const isMilestone = d.description && d.description.includes('[milestone]');
-      const typeLabel = isMilestone ? 'ذكرى مضت (منذ...)' : 'ذكرى سنوية (متكررة)';
-      const typeStyle = isMilestone ? 'background: #e0f2f1; color: #00796b; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-right: 10px;' : 'background: #fff3e0; color: #e65100; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-right: 10px;';
+      const typeLabel = isMilestone ? 'ذكرى مضت (منذ...)' : (d.isRecurring ? 'ذكرى سنوية (متكررة)' : 'موعد عادي (تاريخ محدد)');
+      const typeStyle = isMilestone ? 'background: #e0f2f1; color: #00796b; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-right: 10px;' : (d.isRecurring ? 'background: #fff3e0; color: #e65100; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-right: 10px;' : 'background: #e8eaf6; color: #3f51b5; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-right: 10px;');
 
       item.innerHTML = `
         <div class="stage-item-info">
@@ -1107,10 +1154,34 @@ async function loadDatesList() {
           <span class="stage-item-type" style="display: block; font-size: 0.8rem; color: #777;">التاريخ: ${d.date}</span>
         </div>
         <div class="stage-item-actions">
+          <button class="stage-action-btn date-btn-edit" data-id="${d.id}" data-title="${escapeHTML(d.title)}" data-date="${d.date}" data-ismilestone="${isMilestone ? 'true' : 'false'}" data-isrecurring="${d.isRecurring ? 'true' : 'false'}"><i class="fa-solid fa-pen-to-square"></i></button>
           <button class="stage-action-btn date-btn-delete" data-id="${d.id}" style="color: #fa3e3e;"><i class="fa-solid fa-trash-can"></i></button>
         </div>
       `;
       container.appendChild(item);
+    });
+
+    // Edit Listener
+    document.querySelectorAll('.date-btn-edit').forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute('data-id');
+        const title = btn.getAttribute('data-title');
+        const date = btn.getAttribute('data-date');
+        const isMilestone = btn.getAttribute('data-ismilestone') === 'true';
+        const isRecurring = btn.getAttribute('data-isrecurring') === 'true';
+
+        document.getElementById('edit-date-id').value = id;
+        document.getElementById('date-title').value = title;
+        
+        const fp = document.getElementById('date-value')._flatpickr;
+        if (fp) fp.setDate(date);
+        else document.getElementById('date-value').value = date;
+
+        document.getElementById('date-is-milestone').checked = isMilestone;
+        document.getElementById('date-is-recurring').checked = isRecurring;
+        document.querySelector('#modal-add-date .modal-title').textContent = "تعديل التاريخ المخلد 📝";
+        openModal('modal-add-date');
+      };
     });
 
     document.querySelectorAll('.date-btn-delete').forEach(btn => {
@@ -1213,7 +1284,11 @@ function setupActionListeners() {
     const successMsg = document.getElementById('stage-edit-success').value;
     const failMsg = document.getElementById('stage-edit-fail').value;
     
+    const isMediaActive = document.getElementById('stage-media-active') ? document.getElementById('stage-media-active').checked : true;
     let mediaUrl = document.getElementById('stage-edit-media-url').value;
+    if (!isMediaActive) {
+      mediaUrl = "";
+    }
     const mediaFile = document.getElementById('stage-edit-media').files[0];
 
     if (mediaFile) {
@@ -1299,23 +1374,33 @@ function setupActionListeners() {
   };
 
   // Add Dream button
-  document.getElementById('admin-btn-add-dream').onclick = () => openModal('modal-add-dream');
+  document.getElementById('admin-btn-add-dream').onclick = () => {
+    document.getElementById('form-add-dream').reset();
+    document.getElementById('dream-edit-id').value = "";
+    document.getElementById('dream-modal-title').textContent = "إضافة حلم جديد 💫";
+    openModal('modal-add-dream');
+  };
   document.getElementById('form-add-dream').onsubmit = async (e) => {
     e.preventDefault();
-    const tier = getCurrentTenantTier();
-    const limit = TIER_LIMITS[tier]?.dreams || 5;
-    const currentCount = document.querySelectorAll('#admin-dreams-list .creator-stage-item').length;
-    if (currentCount >= limit) {
-      showToast(`عذراً، الباقة الحالية تسمح بحد أقصى ${limit} أحلام فقط! ⚠️`);
-      return;
-    }
-
+    const editId = document.getElementById('dream-edit-id').value;
     const title = document.getElementById('dream-title').value;
     const desc = document.getElementById('dream-desc').value;
 
     try {
-      await saveDream(currentSpaceId, { title, description: desc });
-      showToast("تم إضافة الحلم بنجاح! ☁️");
+      if (editId) {
+        await updateDream(editId, { title, description: desc });
+        showToast("تم تعديل الحلم بنجاح! ☁️");
+      } else {
+        const tier = getCurrentTenantTier();
+        const limit = TIER_LIMITS[tier]?.dreams || 5;
+        const currentCount = document.querySelectorAll('#admin-dreams-list .creator-stage-item').length;
+        if (currentCount >= limit) {
+          showToast(`عذراً، الباقة الحالية تسمح بحد أقصى ${limit} أحلام فقط! ⚠️`);
+          return;
+        }
+        await saveDream(currentSpaceId, { title, description: desc });
+        showToast("تم إضافة الحلم بنجاح! ☁️");
+      }
       closeModal('modal-add-dream');
       loadDreamsList();
     } catch (err) {
@@ -1325,23 +1410,22 @@ function setupActionListeners() {
   };
 
   // Add Memory button
-  document.getElementById('admin-btn-add-memory').onclick = () => openModal('modal-add-memory');
+  document.getElementById('admin-btn-add-memory').onclick = () => {
+    document.getElementById('form-add-memory').reset();
+    document.getElementById('edit-memory-id').value = "";
+    document.getElementById('edit-memory-photo-url').value = "";
+    document.querySelector('#modal-add-memory .modal-title').textContent = "تخليد ذكرى جديدة 💖";
+    openModal('modal-add-memory');
+  };
   document.getElementById('form-add-memory').onsubmit = async (e) => {
     e.preventDefault();
-    const tier = getCurrentTenantTier();
-    const limit = TIER_LIMITS[tier]?.memories || 8;
-    const currentCount = document.querySelectorAll('#admin-memories-list .creator-stage-item').length;
-    if (currentCount >= limit) {
-      showToast(`عذراً، الباقة الحالية تسمح بحد أقصى ${limit} ذكريات فقط! ⚠️`);
-      return;
-    }
-
+    const editId = document.getElementById('edit-memory-id').value;
     const title = document.getElementById('memory-title').value;
     const date = document.getElementById('memory-date').value;
     const desc = document.getElementById('memory-desc').value;
     const file = document.getElementById('memory-photo').files[0];
 
-    let photoUrl = "";
+    let photoUrl = document.getElementById('edit-memory-photo-url').value || "";
     if (file) {
       showToast("جاري رفع صورة الذكرى...");
       try {
@@ -1352,8 +1436,20 @@ function setupActionListeners() {
     }
 
     try {
-      await saveMemory(currentSpaceId, { title, date, description: desc, photoUrl });
-      showToast("تم حفظ الذكرى بنجاح! 📸");
+      if (editId) {
+        await updateMemory(editId, { title, date, description: desc, photoUrl });
+        showToast("تم تعديل الذكرى بنجاح! 📸");
+      } else {
+        const tier = getCurrentTenantTier();
+        const limit = TIER_LIMITS[tier]?.memories || 8;
+        const currentCount = document.querySelectorAll('#admin-memories-list .creator-stage-item').length;
+        if (currentCount >= limit) {
+          showToast(`عذراً، الباقة الحالية تسمح بحد أقصى ${limit} ذكريات فقط! ⚠️`);
+          return;
+        }
+        await saveMemory(currentSpaceId, { title, date, description: desc, photoUrl });
+        showToast("تم حفظ الذكرى بنجاح! 📸");
+      }
       closeModal('modal-add-memory');
       loadMemoriesList();
     } catch (err) {
@@ -1393,27 +1489,36 @@ function setupActionListeners() {
 
   document.getElementById('admin-btn-add-date').onclick = () => {
     document.getElementById('form-add-date').reset();
+    document.getElementById('edit-date-id').value = "";
     document.getElementById('date-is-milestone').checked = false;
+    document.getElementById('date-is-recurring').checked = true;
+    document.querySelector('#modal-add-date .modal-title').textContent = "تخليد موعد مميز 📌";
     openModal('modal-add-date');
   };
   document.getElementById('form-add-date').onsubmit = async (e) => {
     e.preventDefault();
-    const tier = getCurrentTenantTier();
-    const limit = TIER_LIMITS[tier]?.dates || 5;
-    const currentCount = document.querySelectorAll('#admin-dates-list .creator-stage-item').length;
-    if (currentCount >= limit) {
-      showToast(`عذراً، الباقة الحالية تسمح بحد أقصى ${limit} مواعيد فقط! ⚠️`);
-      return;
-    }
-
+    const editId = document.getElementById('edit-date-id').value;
     const title = document.getElementById('date-title').value;
     const val = document.getElementById('date-value').value;
     const isMilestone = document.getElementById('date-is-milestone').checked;
+    const isRecurring = document.getElementById('date-is-recurring').checked;
     const desc = isMilestone ? '[milestone]' : '';
 
     try {
-      await saveImportantDate(currentSpaceId, { title, date: val, description: desc });
-      showToast("تم حفظ المناسبة بنجاح! 📅");
+      if (editId) {
+        await updateImportantDate(editId, { title, date: val, isRecurring, description: desc });
+        showToast("تم تعديل المناسبة بنجاح! 📅");
+      } else {
+        const tier = getCurrentTenantTier();
+        const limit = TIER_LIMITS[tier]?.dates || 5;
+        const currentCount = document.querySelectorAll('#admin-dates-list .creator-stage-item').length;
+        if (currentCount >= limit) {
+          showToast(`عذراً، الباقة الحالية تسمح بحد أقصى ${limit} مواعيد فقط! ⚠️`);
+          return;
+        }
+        await saveImportantDate(currentSpaceId, { title, date: val, isRecurring, description: desc });
+        showToast("تم حفظ المناسبة بنجاح! 📅");
+      }
       closeModal('modal-add-date');
       loadDatesList();
     } catch (err) {
@@ -1597,24 +1702,32 @@ function initFlatpickr() {
     window.flatpickr("#date-value", {
       locale: "ar",
       dateFormat: "Y-m-d",
-      disableMobile: true
+      disableMobile: true,
+      changeMonth: true,
+      changeYear: true
     });
     window.flatpickr("#memory-date", {
       locale: "ar",
       dateFormat: "Y-m-d",
-      disableMobile: true
+      disableMobile: true,
+      changeMonth: true,
+      changeYear: true
     });
     window.flatpickr("#filter-stats-date", {
       locale: "ar",
       dateFormat: "Y-m-d",
-      disableMobile: true
+      disableMobile: true,
+      changeMonth: true,
+      changeYear: true
     });
     // Start/expiry dates
     window.flatpickr("#admin-start-date, #admin-expiry-date", {
       locale: "ar",
       enableTime: true,
       dateFormat: "Y-m-d H:i",
-      disableMobile: true
+      disableMobile: true,
+      changeMonth: true,
+      changeYear: true
     });
   }
 }

@@ -59,8 +59,24 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_pink.css">
   <!-- Web App Manifest (PWA) -->
   <link rel="manifest" href="manifest.json">
+  <!-- iOS PWA Support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="أدمن الحب">
+  <link rel="apple-touch-icon" href="../icon-512.png">
+  <!-- Android / General PWA -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#d81b60">
   <!-- Supabase Library (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Register Admin Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('[Admin SW] Registered:', reg.scope))
+        .catch(err => console.warn('[Admin SW] Failed:', err));
+    }
+  </script>
 </head>
 <body class="admin-body rtl-mode">
 
@@ -773,6 +789,11 @@
           <input type="file" id="stage-edit-media" accept="image/*,video/*">
           <span id="stage-media-upload-status" class="upload-status">لم يتم تحديد ملف جديد</span>
           <input type="hidden" id="stage-edit-media-url">
+          <!-- Checkbox to delete/keep current media -->
+          <label style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; font-weight: bold; color: var(--progress-bar-color);" id="stage-media-checkbox-wrapper" class="hidden">
+            <input type="checkbox" id="stage-media-active">
+            <span>الصورة الحالية نشطة</span>
+          </label>
         </div>
 
         <div class="form-group-row">
@@ -848,6 +869,8 @@
       <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
       <h2 class="modal-title">تخليد ذكرى جديدة 💖</h2>
       <form id="form-add-memory">
+        <input type="hidden" id="edit-memory-id" value="">
+        <input type="hidden" id="edit-memory-photo-url" value="">
         <div class="form-group">
           <label for="memory-title">اسم الذكرى أو المناسبة</label>
           <input type="text" id="memory-title" required placeholder="مثال: رحلتنا للإسكندرية، أول يوم تعارف...">
@@ -894,6 +917,7 @@
       <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
       <h2 class="modal-title">تخليد موعد مميز 📌</h2>
       <form id="form-add-date">
+        <input type="hidden" id="edit-date-id" value="">
         <div class="form-group">
           <label for="date-title">اسم المناسبة</label>
           <input type="text" id="date-title" required placeholder="مثال: ذكرى زواجنا، تاريخ تعارفنا الأول...">
@@ -902,9 +926,13 @@
           <label for="date-value">التاريخ</label>
           <input type="text" id="date-value" required readonly style="background-color: white; cursor: pointer; text-align: center;" placeholder="اختر تاريخ المناسبة...">
         </div>
-        <div class="form-group toggle-group" style="margin-top: 15px; margin-bottom: 20px;">
+        <div class="form-group toggle-group" style="margin-top: 15px; margin-bottom: 10px;">
           <label for="date-is-milestone">ذكرى مضت (احسب الوقت المنقضي منذ حدوثها)</label>
           <input type="checkbox" id="date-is-milestone">
+        </div>
+        <div class="form-group toggle-group" style="margin-top: 10px; margin-bottom: 20px;">
+          <label for="date-is-recurring">ذكرى سنوية متكررة (تتكرر كل عام)</label>
+          <input type="checkbox" id="date-is-recurring" checked>
         </div>
         <button type="submit" class="btn-primary btn-block">تثبيت التاريخ 📅</button>
       </form>

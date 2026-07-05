@@ -259,16 +259,23 @@ async function loadStep4Data() {
     const approachingDates = [];
 
     dates.forEach(d => {
-      const countdown = calculateAnniversaryDays(d.date);
+      const countdown = calculateAnniversaryDays(d.date, d.isRecurring !== false);
       
-      if (countdown.daysToGo >= 0 && countdown.daysToGo <= 7) {
+      if (!countdown.isPast && countdown.daysToGo >= 0 && countdown.daysToGo <= 7) {
         approachingDates.push({
           title: d.title,
           daysLeft: countdown.daysToGo
         });
       }
 
-      const countdownText = countdown.daysToGo === 0 ? 'اليوم! 🎉' : `متبقي ${countdown.daysToGo} يوم`;
+      let countdownText = '';
+      if (countdown.daysToGo === 0) {
+        countdownText = 'اليوم! 🎉';
+      } else if (countdown.isPast) {
+        countdownText = `منذ ${countdown.daysToGo} يوم`;
+      } else {
+        countdownText = `متبقي ${countdown.daysToGo} يوم`;
+      }
 
       const card = document.createElement('div');
       card.className = 'date-item-card';
@@ -308,25 +315,34 @@ async function loadStep4Data() {
   }
 }
 
-function calculateAnniversaryDays(rawDate) {
+function calculateAnniversaryDays(rawDate, isRecurring = true) {
   const eventDate = new Date(rawDate);
+  eventDate.setHours(0, 0, 0, 0);
   const today = new Date();
-  
   today.setHours(0, 0, 0, 0);
   
-  const currentYear = today.getFullYear();
-  const nextOccurrence = new Date(eventDate);
-  nextOccurrence.setFullYear(currentYear);
-  nextOccurrence.setHours(0,0,0,0);
+  if (isRecurring) {
+    const currentYear = today.getFullYear();
+    const nextOccurrence = new Date(eventDate);
+    nextOccurrence.setFullYear(currentYear);
+    nextOccurrence.setHours(0, 0, 0, 0);
 
-  if (nextOccurrence < today) {
-    nextOccurrence.setFullYear(currentYear + 1);
+    if (nextOccurrence < today) {
+      nextOccurrence.setFullYear(currentYear + 1);
+    }
+
+    const diffTime = nextOccurrence - today;
+    const daysToGo = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return { daysToGo, isPast: false };
+  } else {
+    const diffTime = eventDate - today;
+    const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (days < 0) {
+      return { daysToGo: Math.abs(days), isPast: true };
+    } else {
+      return { daysToGo: days, isPast: false };
+    }
   }
-
-  const diffTime = nextOccurrence - today;
-  const daysToGo = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  return { daysToGo };
 }
 
 function formatArabicDate(dateStr) {

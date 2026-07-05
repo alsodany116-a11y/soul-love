@@ -1,28 +1,29 @@
 {
-  "name": "لوحة تحكم رحلة الحب 💖",
-  "short_name": "رحلة الحب الأدمن",
+  "name": "لوحة تحكم رحلة الحب ⚙️",
+  "short_name": "أدمن الحب",
   "description": "لوحة تحكم لإدارة مساحات الحب والألغاز والذكريات المشتركة",
-  "start_url": "./index.html",
+  "start_url": "./index.htm",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
-  "background_color": "#f7f9fc",
+  "background_color": "#1a0010",
   "theme_color": "#d81b60",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["productivity", "lifestyle"],
   "icons": [
     {
-      "src": "https://img.icons8.com/color/144/heart-in-hand.png",
-      "sizes": "144x144",
-      "type": "image/png"
-    },
-    {
-      "src": "https://img.icons8.com/color/192/heart-in-hand.png",
+      "src": "../icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "https://img.icons8.com/color/512/heart-in-hand.png",
+      "src": "../icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

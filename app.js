@@ -31,9 +31,15 @@ document.addEventListener('DOMContentLoaded', () => {
 async function router() {
   const hash = window.location.hash;
 
-  // Redirect root landing page requests directly to admin dashboard
-  if (!hash || hash === '#welcome' || (!hash.startsWith('#play/') && !hash.startsWith('#journey/') && !hash.startsWith('#lock/'))) {
-    window.location.href = './admin/';
+  // Hide all screens immediately to prevent any flash
+  document.querySelectorAll('.app-screen').forEach(s => s.classList.add('hidden'));
+
+  // Known player routes
+  const validPlayerRoute = hash.startsWith('#play/') || hash.startsWith('#journey/') || hash.startsWith('#lock/') || hash.startsWith('#celebration/');
+
+  // Redirect root/welcome/unknown to admin
+  if (!hash || hash === '#' || hash === '#welcome' || !validPlayerRoute) {
+    window.location.replace('./admin/');
     return;
   }
 
@@ -151,8 +157,17 @@ async function router() {
  * Activates display on target screen.
  */
 function showScreen(screenId) {
+  // Remove all active screens first
+  document.querySelectorAll('.app-screen').forEach(s => {
+    s.classList.remove('screen-active');
+    s.classList.add('hidden');
+  });
+  // Show the target screen
   const elem = document.getElementById(screenId);
-  if (elem) elem.classList.remove('hidden');
+  if (elem) {
+    elem.classList.remove('hidden');
+    elem.classList.add('screen-active');
+  }
 }
 
 /**
