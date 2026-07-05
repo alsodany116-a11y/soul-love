@@ -518,6 +518,18 @@ export async function setupCelebrationScreen(gameId) {
       window.location.hash = `#journey/${getCurrentTenantSlug()}`;
     };
 
+    // Replay button click
+    const replayBtn = document.getElementById('celebration-btn-replay');
+    if (replayBtn) {
+      replayBtn.onclick = () => {
+        if (confirm("هل تريد إعادة حل الألغاز والبدء من المرحلة الأولى؟ 🔁")) {
+          localStorage.removeItem(`currentPlayerProgress_${currentGame.id}`);
+          window.location.hash = `#play/${getCurrentTenantSlug()}`;
+          window.location.reload();
+        }
+      };
+    }
+
     // Celebration compact music widget sync & events
     const audio = document.getElementById('global-bg-music');
     const songName = document.getElementById('celebration-song-name');

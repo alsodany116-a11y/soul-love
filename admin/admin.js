@@ -187,6 +187,58 @@ document.addEventListener('DOMContentLoaded', async () => {
       revealMasterLogin();
     }
   }
+
+  // Bind Redirect Form for Space Owners
+  const formRedirect = document.getElementById('form-space-redirect');
+  if (formRedirect) {
+    formRedirect.onsubmit = async (e) => {
+      e.preventDefault();
+      let inputVal = document.getElementById('redirect-space-slug').value.trim();
+      const errorMsg = document.getElementById('space-redirect-error');
+      errorMsg.classList.add('hidden');
+      
+      // If they pasted a full URL, try to extract the slug/hash part
+      if (inputVal.includes('#play/')) {
+        inputVal = inputVal.split('#play/')[1].split('/')[0];
+      } else if (inputVal.includes('#journey/')) {
+        inputVal = inputVal.split('#journey/')[1].split('/')[0];
+      } else if (inputVal.includes('admin/#')) {
+        inputVal = inputVal.split('admin/#')[1].split('/')[0];
+      }
+      
+      const cleanSlug = inputVal.toLowerCase().replace(/#/g, '').replace(/\//g, '').trim();
+      if (!cleanSlug) {
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+      
+      try {
+        showToast("جاري البحث عن المساحة... 🔍");
+        // Verify database existence
+        const { setTenantBySlug } = await import('../config.js');
+        await setTenantBySlug(cleanSlug);
+        
+        // If found, redirect to the hash
+        window.location.hash = `#${cleanSlug}`;
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        errorMsg.textContent = "اسم المساحة غير صحيح أو غير مسجل لدينا! ❌";
+        errorMsg.classList.remove('hidden');
+      }
+    };
+  }
+
+  // Toggle master mode login
+  const btnToggleMaster = document.getElementById('btn-toggle-master-mode');
+  if (btnToggleMaster) {
+    btnToggleMaster.onclick = () => {
+      const container = document.getElementById('master-login-container');
+      if (container) {
+        container.classList.toggle('hidden');
+      }
+    };
+  }
 });
 
 function revealSpaceLogin(slug) {
@@ -553,6 +605,12 @@ async function revealAdminPanel(isCustomerMode = false) {
     logoutBtn.onclick = () => {
       if (confirm("هل تريد تسجيل الخروج؟")) {
         sessionStorage.removeItem(`unlocked_admin_${currentSpaceId}`);
+        const currentSlug = getCurrentTenantSlug();
+        if (currentSlug) {
+          window.location.href = window.location.pathname + "#" + currentSlug;
+        } else {
+          window.location.href = window.location.pathname;
+        }
         window.location.reload();
       }
     };
@@ -1656,8 +1714,6 @@ function hideShareLinkUI() {
 function openModal(id) {
   const m = document.getElementById(id);
   if (m) {
-    const f = m.querySelector('form');
-    if (f) f.reset();
     m.classList.remove('hidden');
   }
 }

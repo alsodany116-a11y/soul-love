@@ -93,25 +93,49 @@
   <div id="toast-container"></div>
 
   <!-- ========================================== -->
-  <!-- 0. ADMIN MASTER LOGIN SCREEN               -->
+  <!-- 0. ADMIN MASTER LOGIN & REDIRECT SCREEN    -->
   <!-- ========================================== -->
   <section id="admin-screen-master-login" class="app-screen">
     <div class="lock-box fade-in" style="max-width: 500px;">
       <div class="lock-icon">
-        <i class="fa-solid fa-user-shield" style="color: var(--progress-bar-color);"></i>
+        <i class="fa-solid fa-heart-circle-bolt" style="color: var(--progress-bar-color);"></i>
       </div>
-      <h2 class="lock-title">بوابة لوحة التحكم الرئيسية ⚙️</h2>
-      <p class="lock-desc">أدخل كلمة المرور الرئيسية للأدمن للتحكم الكامل بكافة مساحات وألعاب الحب.</p>
-      <form id="form-master-login">
-        <div class="form-group">
-          <div class="input-password-wrapper">
-            <input type="password" id="master-password" required placeholder="أدخل كلمة المرور الرئيسية...">
-            <button type="button" class="btn-toggle-password"><i class="fa-regular fa-eye"></i></button>
+      
+      <!-- Space Redirect Section (For Space Owners / Customers) -->
+      <div id="space-redirect-container">
+        <h2 class="lock-title">لوحة تحكم مساحة الحب 💖</h2>
+        <p class="lock-desc">أدخل اسم المساحة الخاص بكما (الـ Slug) أو الصق رابط اللعبة للدخول إلى لوحة التحكم الخاصة بك.</p>
+        <form id="form-space-redirect">
+          <div class="form-group">
+            <input type="text" id="redirect-space-slug" required placeholder="مثال: ahmed-and-sara" style="text-align: center; font-size: 1.1rem; direction: ltr; border: 2px solid #ffccd5; border-radius: 30px; padding: 12px;">
           </div>
-        </div>
-        <button type="submit" class="btn-primary btn-block">دخول لوحة التحكم <i class="fa-solid fa-right-to-bracket"></i></button>
-      </form>
-      <div id="master-login-error" class="auth-error-msg hidden">كلمة المرور الرئيسية غير صحيحة! ❌</div>
+          <button type="submit" class="btn-primary btn-block">متابعة لدخول المساحة <i class="fa-solid fa-chevron-left"></i></button>
+        </form>
+        <div id="space-redirect-error" class="auth-error-msg hidden">اسم المساحة غير صحيح أو غير موجود! ❌</div>
+      </div>
+
+      <!-- Divider line -->
+      <hr style="border: 0; height: 1px; background: #eee; margin: 25px 0;">
+
+      <!-- Toggle Link to Master Login -->
+      <div style="text-align: center;">
+        <button type="button" id="btn-toggle-master-mode" style="background: none; border: none; color: #888; font-size: 0.9rem; cursor: pointer; text-decoration: underline;"><i class="fa-solid fa-user-gear"></i> دخول الإدارة العامة للمطورين ⚙️</button>
+      </div>
+
+      <!-- Master Login Section (Hidden by default) -->
+      <div id="master-login-container" class="hidden" style="margin-top: 20px;">
+        <h3 class="lock-title" style="font-size: 1.2rem;">بوابة الإدارة العامة 🛠️</h3>
+        <form id="form-master-login">
+          <div class="form-group">
+            <div class="input-password-wrapper">
+              <input type="password" id="master-password" placeholder="أدخل كلمة المرور الرئيسية...">
+              <button type="button" class="btn-toggle-password"><i class="fa-regular fa-eye"></i></button>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary btn-block" style="background: #333;">دخول لوحة التحكم <i class="fa-solid fa-right-to-bracket"></i></button>
+        </form>
+        <div id="master-login-error" class="auth-error-msg hidden">كلمة المرور الرئيسية غير صحيحة! ❌</div>
+      </div>
     </div>
   </section>
 
