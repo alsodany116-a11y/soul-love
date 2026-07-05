@@ -183,22 +183,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       revealDashboard();
     } else {
       revealMasterLogin();
-
-      // Show/Hide developer gates based on hash
+      // Always show master login directly on /  (space redirect is no longer shown here)
       const masterContainer = document.getElementById('master-login-container');
       const spaceRedirectContainer = document.getElementById('space-redirect-container');
       const btnToggleMaster = document.getElementById('btn-toggle-master-mode');
-      
-      if (!isMasterHash) {
-        if (masterContainer) masterContainer.classList.add('hidden');
-        if (spaceRedirectContainer) spaceRedirectContainer.classList.remove('hidden');
-        // Hide the developers login link completely from customers
-        if (btnToggleMaster) btnToggleMaster.style.display = 'none';
-      } else {
-        if (masterContainer) masterContainer.classList.remove('hidden');
-        if (spaceRedirectContainer) spaceRedirectContainer.classList.add('hidden');
-        if (btnToggleMaster) btnToggleMaster.style.display = 'inline-block';
-      }
+      if (masterContainer) masterContainer.classList.remove('hidden');
+      if (spaceRedirectContainer) spaceRedirectContainer.classList.add('hidden');
+      if (btnToggleMaster) btnToggleMaster.style.display = 'none';
     }
   }
 
