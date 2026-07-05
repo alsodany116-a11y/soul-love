@@ -154,10 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const urlParams = new URLSearchParams(window.location.search);
-  let spaceSlug = urlParams.get('space');
-  if (!spaceSlug && window.location.hash && window.location.hash !== '#master') {
-    spaceSlug = window.location.hash.replace('#', '').replace('/', '').trim();
-  }
+  const spaceSlug = urlParams.get('space');
 
   if (spaceSlug) {
     // Customer Mode (Dynamic database switching)
@@ -175,8 +172,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
       console.error(err);
       alert(err.message || "فشل ربط قاعدة بيانات المساحة.");
-      window.location.hash = ""; // Clear hash to return to redirect screen
-      window.location.reload();
+      window.location.href = '/'; // Return to master dashboard on failure
     }
   } else {
     // Root mode: Show the space redirect/login lookup page
@@ -236,9 +232,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const { setTenantBySlug } = await import('./config.js');
         await setTenantBySlug(cleanSlug);
         
-        // If found, redirect to the hash
-        window.location.hash = `#${cleanSlug}`;
-        window.location.reload();
+        // If found, redirect to the space admin panel
+        window.location.href = `/admin/${cleanSlug}`;
       } catch (err) {
         console.error(err);
         errorMsg.textContent = "اسم المساحة غير صحيح أو غير مسجل لدينا! ❌";
@@ -522,7 +517,7 @@ function renderSpacesList() {
     btn.onclick = (e) => {
       e.stopPropagation();
       const slug = btn.getAttribute('data-slug');
-      const adminUrl = `${window.location.origin}/#${slug}`;
+      const adminUrl = `${window.location.origin}/admin/${slug}`;
       navigator.clipboard.writeText(adminUrl);
       showToast("تم نسخ رابط لوحة تحكم العميل! 📋");
     };
@@ -625,11 +620,10 @@ async function revealAdminPanel(isCustomerMode = false) {
         sessionStorage.removeItem(`unlocked_admin_${currentSpaceId}`);
         const currentSlug = getCurrentTenantSlug();
         if (currentSlug) {
-          window.location.href = window.location.pathname + "#" + currentSlug;
+          window.location.href = `/admin/${currentSlug}`;
         } else {
-          window.location.href = window.location.pathname;
+          window.location.href = '/';
         }
-        window.location.reload();
       }
     };
   } else {

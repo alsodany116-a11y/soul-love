@@ -2,8 +2,8 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/admin",
-      "destination": "/"
+      "source": "/admin/:slug",
+      "destination": "/admin-space.html?space=:slug"
     },
     {
       "source": "/:slug",
