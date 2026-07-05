@@ -1754,27 +1754,41 @@ function showToast(msg) {
 
 function initFlatpickr() {
   if (typeof window.flatpickr !== 'undefined') {
-    // Dates/timeline fields
     window.flatpickr("#date-value", {
       locale: "ar",
       dateFormat: "Y-m-d",
       disableMobile: true,
       changeMonth: true,
-      changeYear: true
+      changeYear: true,
+      minDate: "1940-01-01",
+      maxDate: "2050-12-31"
+    });
+    window.flatpickr("#text-relationshipStartDate", {
+      locale: "ar",
+      dateFormat: "Y-m-d",
+      disableMobile: true,
+      changeMonth: true,
+      changeYear: true,
+      minDate: "1940-01-01",
+      maxDate: "2050-12-31"
     });
     window.flatpickr("#memory-date", {
       locale: "ar",
       dateFormat: "Y-m-d",
       disableMobile: true,
       changeMonth: true,
-      changeYear: true
+      changeYear: true,
+      minDate: "1940-01-01",
+      maxDate: "2050-12-31"
     });
     window.flatpickr("#filter-stats-date", {
       locale: "ar",
       dateFormat: "Y-m-d",
       disableMobile: true,
       changeMonth: true,
-      changeYear: true
+      changeYear: true,
+      minDate: "1940-01-01",
+      maxDate: "2050-12-31"
     });
     // Start/expiry dates
     window.flatpickr("#admin-start-date, #admin-expiry-date", {
@@ -1783,7 +1797,9 @@ function initFlatpickr() {
       dateFormat: "Y-m-d H:i",
       disableMobile: true,
       changeMonth: true,
-      changeYear: true
+      changeYear: true,
+      minDate: "1940-01-01",
+      maxDate: "2050-12-31"
     });
   }
 }

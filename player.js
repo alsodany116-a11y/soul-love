@@ -466,6 +466,10 @@ export async function setupCelebrationScreen(gameId) {
       return;
     }
 
+    // Show the audio player widget once game is solved
+    const audioHud = document.getElementById('global-audio-hud');
+    if (audioHud) audioHud.classList.remove('hidden');
+
     hydratePlayerUITexts();
 
     // Apply custom visual styling
@@ -593,16 +597,27 @@ export async function setupCelebrationScreen(gameId) {
 /**
  * Triggers custom uploaded playlist loops.
  */
-async function playGameMusic(spaceId) {
+export async function playGameMusic(spaceId, hideHud = true) {
   try {
+    const audio = document.getElementById('global-bg-music');
+    const audioHud = document.getElementById('global-audio-hud');
+    
+    if (audio.dataset.loadedSpaceId === spaceId) {
+      if (hideHud) {
+        audioHud.classList.add('hidden');
+      } else {
+        audioHud.classList.remove('hidden');
+      }
+      return;
+    }
+    audio.dataset.loadedSpaceId = spaceId;
+
     const tracks = await fetchMusicTracks(spaceId);
     if (!tracks || tracks.length === 0) {
-      document.getElementById('global-audio-hud').classList.add('hidden');
+      audioHud.classList.add('hidden');
       return;
     }
 
-    const audio = document.getElementById('global-bg-music');
-    const audioHud = document.getElementById('global-audio-hud');
     const titleSpan = document.getElementById('audio-hud-title');
     const playBtn = document.getElementById('audio-hud-play');
 
@@ -615,34 +630,62 @@ async function playGameMusic(spaceId) {
     };
 
     loadTrack(0);
-    audioHud.classList.remove('hidden');
-    audio.play().then(() => {
-      playBtn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
-    }).catch(err => {
-      console.log("Autoplay blocked, waiting for user click.", err);
-      playBtn.innerHTML = `<i class="fa-solid fa-play"></i>`;
-    });
+    
+    // Control HUD visibility based on whether we should hide it
+    if (hideHud) {
+      audioHud.classList.add('hidden');
+    } else {
+      audioHud.classList.remove('hidden');
+    }
+
+    const startPlaying = () => {
+      audio.play().then(() => {
+        playBtn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+      }).catch(err => {
+        console.log("Autoplay blocked, waiting for user interaction.", err);
+        playBtn.innerHTML = `<i class="fa-solid fa-play"></i>`;
+      });
+    };
+
+    startPlaying();
+
+    // Browser Autoplay Fallback: Play on first document interaction
+    const playOnInteraction = () => {
+      if (audio.paused) {
+        audio.play().then(() => {
+          playBtn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+        }).catch(err => console.log("Failed playing on interaction", err));
+      }
+      document.removeEventListener('click', playOnInteraction);
+      document.removeEventListener('touchstart', playOnInteraction);
+    };
+    document.addEventListener('click', playOnInteraction);
+    document.addEventListener('touchstart', playOnInteraction);
 
     // Play next song on end
     audio.onended = () => {
       currentTrackIdx = (currentTrackIdx + 1) % tracks.length;
       loadTrack(currentTrackIdx);
-      audio.play();
+      audio.play().then(() => {
+        playBtn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+      });
     };
 
     // Skip Buttons
     document.getElementById('audio-hud-next').onclick = () => {
       currentTrackIdx = (currentTrackIdx + 1) % tracks.length;
       loadTrack(currentTrackIdx);
-      audio.play();
-      playBtn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+      audio.play().then(() => {
+        playBtn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+      });
     };
 
     document.getElementById('audio-hud-prev').onclick = () => {
       currentTrackIdx = (currentTrackIdx - 1 + tracks.length) % tracks.length;
       loadTrack(currentTrackIdx);
-      audio.play();
-      playBtn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+      audio.play().then(() => {
+        playBtn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+      });
     };
 
     // Audio hud play toggles
@@ -658,6 +701,7 @@ async function playGameMusic(spaceId) {
     };
   } catch (err) {
     console.warn("Could not start background playlist.", err);
+    showToast("تنبيه الموسيقى: " + err.message);
   }
 }
 

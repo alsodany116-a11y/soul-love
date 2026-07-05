@@ -2,7 +2,7 @@
 import { 
   verifySpacePassword, isSpaceUnlocked, fetchGame, fetchSpaceUI, findSpaceByPassword, fetchGamesBySpace 
 } from './storage.js';
-import { initPlayer, setupCelebrationScreen } from './player.js';
+import { initPlayer, setupCelebrationScreen, playGameMusic } from './player.js';
 import { initJourney } from './journey.js';
 import { applyThemeStyles } from './themes.js';
 import { setTenantBySlug } from './config.js';
@@ -192,6 +192,9 @@ async function initLockScreen(targetAction, targetId) {
     if (targetAction === 'play' || targetAction === 'journey') {
       const tenantDetails = await setTenantBySlug(targetId);
       spaceId = tenantDetails.id;
+      
+      // Start background music immediately (hidden HUD)
+      playGameMusic(spaceId, true);
       
       const data = await fetchSpaceUI(spaceId);
       customTexts = data.uiTexts;

@@ -28,6 +28,10 @@ export async function initJourney(spaceId) {
   activeGalleryItems = [];
   lightboxIndex = -1;
 
+  // Show the audio player widget once in journey mode
+  const audioHud = document.getElementById('global-audio-hud');
+  if (audioHud) audioHud.classList.remove('hidden');
+
   setupJourneyListeners();
 
   try {
@@ -104,20 +108,32 @@ function showStepCard(stepNumber) {
 
 async function loadStep1Data() {
   try {
-    const dates = await fetchImportantDates(currentSpaceId);
-    if (dates.length > 0) {
-      // Sort to find the earliest date
-      const sorted = [...dates].sort((a, b) => new Date(a.date) - new Date(b.date));
-      const earliest = new Date(sorted[0].date);
+    const startDate = spaceUI.relationshipStartDate;
+    if (startDate) {
+      const earliest = new Date(startDate);
+      earliest.setHours(0, 0, 0, 0);
       const today = new Date();
-      const diffTime = Math.abs(today - earliest);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      today.setHours(0, 0, 0, 0);
+      const diffTime = today - earliest;
+      const diffDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
       document.getElementById('journey-stat-days').textContent = diffDays;
     } else {
-      document.getElementById('journey-stat-days').textContent = 0;
+      // Fallback to earliest date in important dates if not configured
+      const dates = await fetchImportantDates(currentSpaceId);
+      if (dates.length > 0) {
+        const sorted = [...dates].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const earliest = new Date(sorted[0].date);
+        const today = new Date();
+        const diffTime = Math.abs(today - earliest);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        document.getElementById('journey-stat-days').textContent = diffDays;
+      } else {
+        document.getElementById('journey-stat-days').textContent = 0;
+      }
     }
   } catch (err) {
     console.error(err);
+    document.getElementById('journey-stat-days').textContent = 0;
   }
 }
 
