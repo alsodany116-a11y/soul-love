@@ -25,21 +25,28 @@ document.addEventListener('DOMContentLoaded', () => {
   router();
 });
 
-/**
- * Client-Side Router. Evaluates URL hashes and activates matching screens.
- */
 async function router() {
   const hash = window.location.hash;
 
   // Hide all screens immediately to prevent any flash
   document.querySelectorAll('.app-screen').forEach(s => s.classList.add('hidden'));
 
+  // Get space slug from query string parameter (set by Vercel rewrite)
+  const urlParams = new URLSearchParams(window.location.search);
+  const spaceSlug = urlParams.get('space');
+
+  if (!spaceSlug) {
+    // If no space slug is loaded on play.html, redirect back to dashboard
+    window.location.replace('./');
+    return;
+  }
+
   // Known player routes
   const validPlayerRoute = hash.startsWith('#play/') || hash.startsWith('#journey/') || hash.startsWith('#lock/') || hash.startsWith('#celebration/');
 
-  // Redirect root/welcome/unknown to admin
+  // If no hash or invalid hash, auto-redirect to lock screen for this space
   if (!hash || hash === '#' || hash === '#welcome' || !validPlayerRoute) {
-    window.location.replace('./admin/');
+    window.location.replace(`#lock/play/${spaceSlug}`);
     return;
   }
 
@@ -48,9 +55,9 @@ async function router() {
   const param = parts[1];
   const subParam = parts[2];
 
-  // Admin redirect hook for play/slug/admin and journey/slug/admin
+  // Admin redirect hook for play/slug/admin and journey/slug/admin (sends to root dashboard)
   if ((route === '#play' || route === '#journey') && subParam === 'admin') {
-    window.location.href = `./admin/#${param}`;
+    window.location.href = `./#${param}`;
     return;
   }
 
@@ -61,14 +68,12 @@ async function router() {
 
   switch (route) {
     case '#welcome':
-      showScreen('screen-welcome');
-      // Apply default styling overrides
-      applyThemeStyles('rose_garden', document.documentElement, {});
+      window.location.replace(`#lock/play/${spaceSlug}`);
       break;
 
     case '#play':
       if (!param) {
-        window.location.hash = '#welcome';
+        window.location.replace(`#lock/play/${spaceSlug}`);
         break;
       }
 

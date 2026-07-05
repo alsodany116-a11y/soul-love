@@ -2,16 +2,12 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/admin/index.html",
-      "destination": "/admin/index.htm"
-    },
-    {
       "source": "/admin",
-      "destination": "/admin/index.htm"
+      "destination": "/"
     },
     {
-      "source": "/admin/",
-      "destination": "/admin/index.htm"
+      "source": "/:slug",
+      "destination": "/play.html?space=:slug"
     }
   ]
 }
