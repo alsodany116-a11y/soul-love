@@ -77,6 +77,12 @@
         .catch(err => console.warn('[Admin SW] Failed:', err));
     }
   </script>
+  <style>
+    /* Ensure admin login screens (which use .app-screen) display as flex when not hidden */
+    .admin-body .app-screen:not(.hidden) {
+      display: flex !important;
+    }
+  </style>
 </head>
 <body class="admin-body rtl-mode">
 
