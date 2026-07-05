@@ -22,10 +22,39 @@ export function getMasterClient() {
   return masterClient;
 }
 
+function logDebug(msg) {
+  console.log("[Debug]", msg);
+  let dbg = document.getElementById('debug-box');
+  if (!dbg) {
+    dbg = document.createElement('div');
+    dbg.id = 'debug-box';
+    dbg.style.position = 'fixed';
+    dbg.style.bottom = '10px';
+    dbg.style.right = '10px';
+    dbg.style.background = 'rgba(0,0,0,0.85)';
+    dbg.style.color = '#00ff00';
+    dbg.style.padding = '10px';
+    dbg.style.zIndex = '999999';
+    dbg.style.fontFamily = 'monospace';
+    dbg.style.fontSize = '12px';
+    dbg.style.maxHeight = '200px';
+    dbg.style.overflowY = 'auto';
+    dbg.style.borderRadius = '5px';
+    dbg.style.width = '300px';
+    dbg.style.direction = 'ltr';
+    document.body.appendChild(dbg);
+  }
+  const entry = document.createElement('div');
+  entry.textContent = new Date().toLocaleTimeString() + ": " + msg;
+  dbg.appendChild(entry);
+  dbg.scrollTop = dbg.scrollHeight;
+}
+
 /**
  * Dynamically switches the active database tenant using a slug from the registry.
  */
 export async function setTenantBySlug(slug) {
+  logDebug("setTenantBySlug called with slug: " + slug);
   if (!slug) {
     tenantClient = null;
     currentTenantSlug = null;
@@ -35,20 +64,33 @@ export async function setTenantBySlug(slug) {
 
   // If already loaded, return cached details
   if (currentTenantSlug === slug && tenantClient) {
+    logDebug("Using cached tenant details.");
     return currentTenantDetails;
   }
 
+  logDebug("Initializing Master Client...");
   const master = getMasterClient();
-  if (!master) throw new Error("Could not initialize Master Supabase client.");
+  if (!master) {
+    logDebug("Master client is null!");
+    throw new Error("Could not initialize Master Supabase client.");
+  }
 
-  // Query registry for credentials
-  const { data, error } = await master
-    .from('spaces_registry')
-    .select('*')
-    .eq('slug', slug.toLowerCase().trim())
-    .single();
+  logDebug("Querying registry for slug: " + slug);
+  let result;
+  try {
+    result = await master
+      .from('spaces_registry')
+      .select('*')
+      .eq('slug', slug.toLowerCase().trim())
+      .single();
+  } catch (ex) {
+    logDebug("Registry query exception: " + ex.message);
+    throw ex;
+  }
 
+  const { data, error } = result;
   if (error || !data) {
+    logDebug("Registry query failed: " + (error ? error.message : "No data"));
     console.error("Error finding space in registry:", error);
     tenantClient = null;
     currentTenantSlug = null;
@@ -56,9 +98,13 @@ export async function setTenantBySlug(slug) {
     throw new Error(`لم يتم العثور على مساحة الحب بالاسم: ${slug}`);
   }
 
+  logDebug("Registry query success. Tenant URL: " + data.tenant_supabase_url);
+
   // Instantiate tenant client
   try {
+    logDebug("Creating Tenant Client...");
     tenantClient = window.supabase.createClient(data.tenant_supabase_url, data.tenant_supabase_anon_key);
+    logDebug("Tenant Client created.");
     currentTenantSlug = slug.toLowerCase().trim();
     currentTenantDetails = {
       id: data.id,
@@ -70,8 +116,10 @@ export async function setTenantBySlug(slug) {
       tier: data.tier || 1,
       createdAt: data.created_at
     };
+    logDebug("setTenantBySlug completed successfully.");
     return currentTenantDetails;
   } catch (err) {
+    logDebug("Tenant Client creation failed: " + err.message);
     console.error("Error instantiating tenant Supabase client:", err);
     tenantClient = null;
     currentTenantSlug = null;

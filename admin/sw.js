@@ -1,4 +1,4 @@
-const CACHE_NAME = 'love-hunt-admin-v3';
+const CACHE_NAME = 'love-hunt-admin-v4';
 const STATIC_ASSETS = [
   './',
   './index.htm',
@@ -38,7 +38,7 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Fetch: network-first for admin HTML, cache-first for static files
+// Fetch: network-first for HTML/JS/CSS, cache-first for other files (images/icons)
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
@@ -47,16 +47,26 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Network-first for navigation
-  if (e.request.mode === 'navigate') {
+  // Network-first for navigation, JS, CSS, manifest, and root paths
+  if (
+    e.request.mode === 'navigate' ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('.htm') ||
+    url.pathname.endsWith('.html') ||
+    url.pathname.endsWith('.json') ||
+    url.pathname.endsWith('/')
+  ) {
     e.respondWith(
       fetch(e.request)
         .then(res => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+          if (res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+          }
           return res;
         })
-        .catch(() => caches.match(e.request).then(r => r || caches.match('./index.htm')))
+        .catch(() => caches.match(e.request).then(r => r || (e.request.mode === 'navigate' ? caches.match('./index.htm') : null)))
     );
     return;
   }

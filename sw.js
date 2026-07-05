@@ -1,4 +1,4 @@
-const CACHE_NAME = 'love-journey-v3';
+const CACHE_NAME = 'love-journey-v4';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -40,7 +40,7 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Fetch: Network-first for HTML/API, cache-first for static files
+// Fetch: Network-first for JS, CSS, HTML/API, cache-first for other static resources (images/fonts)
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
@@ -49,21 +49,29 @@ self.addEventListener('fetch', (e) => {
     return; // Let browser handle it normally
   }
 
-  // Network-first for HTML navigation (always get fresh page)
-  if (e.request.mode === 'navigate') {
+  // Network-first for HTML navigation, JS, CSS, and manifest files
+  if (
+    e.request.mode === 'navigate' ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('.json') ||
+    url.pathname.endsWith('/')
+  ) {
     e.respondWith(
       fetch(e.request)
         .then(res => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+          if (res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+          }
           return res;
         })
-        .catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
+        .catch(() => caches.match(e.request).then(r => r || (e.request.mode === 'navigate' ? caches.match('./index.html') : null)))
     );
     return;
   }
 
-  // Cache-first for JS/CSS/fonts (static assets)
+  // Cache-first for other static assets (images, icons, etc.)
   e.respondWith(
     caches.match(e.request).then((cached) => {
       if (cached) return cached;
