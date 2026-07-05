@@ -24,30 +24,6 @@ export function getMasterClient() {
 
 function logDebug(msg) {
   console.log("[Debug]", msg);
-  let dbg = document.getElementById('debug-box');
-  if (!dbg) {
-    dbg = document.createElement('div');
-    dbg.id = 'debug-box';
-    dbg.style.position = 'fixed';
-    dbg.style.bottom = '10px';
-    dbg.style.right = '10px';
-    dbg.style.background = 'rgba(0,0,0,0.85)';
-    dbg.style.color = '#00ff00';
-    dbg.style.padding = '10px';
-    dbg.style.zIndex = '999999';
-    dbg.style.fontFamily = 'monospace';
-    dbg.style.fontSize = '12px';
-    dbg.style.maxHeight = '200px';
-    dbg.style.overflowY = 'auto';
-    dbg.style.borderRadius = '5px';
-    dbg.style.width = '300px';
-    dbg.style.direction = 'ltr';
-    document.body.appendChild(dbg);
-  }
-  const entry = document.createElement('div');
-  entry.textContent = new Date().toLocaleTimeString() + ": " + msg;
-  dbg.appendChild(entry);
-  dbg.scrollTop = dbg.scrollHeight;
 }
 
 /**

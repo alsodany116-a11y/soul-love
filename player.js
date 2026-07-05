@@ -482,7 +482,15 @@ export async function setupCelebrationScreen(gameId) {
 
     // Populate concluding details from spaceUI customizations or game config fallback
     document.getElementById('celebration-concluding-msg').textContent = spaceUI.concludingMsg || currentGame.finalMessage || "لقد تمكنت من فك رموز ذكرياتنا واجتياز كل المراحل بنجاح. لقد جمعنا الحب والوفاء معًا.";
-    document.getElementById('celebration-gift-text').textContent = spaceUI.giftText || currentGame.giftMessage || "حبيبتي الغالية، هذه رسالة حب مخبأة لك...";
+    
+    // Clear letter content to prepare for live typing effect
+    const giftTextElem = document.getElementById('celebration-gift-text');
+    const fullText = spaceUI.giftText || currentGame.giftMessage || "حبيبتي الغالية، هذه رسالة حب مخبأة لك...";
+    giftTextElem.textContent = "";
+
+    if (window.celebrationTypewriterTimeout) {
+      clearTimeout(window.celebrationTypewriterTimeout);
+    }
 
     // Render surprise media
     const mediaWrapper = document.getElementById('celebration-media-wrapper');
@@ -510,6 +518,17 @@ export async function setupCelebrationScreen(gameId) {
       if (typeof window.confetti === 'function') {
         window.confetti({ particleCount: 80, spread: 60 });
       }
+
+      // Start typewriter effect after card slides out
+      let charIdx = 0;
+      const typeNextChar = () => {
+        if (charIdx < fullText.length) {
+          giftTextElem.textContent += fullText.charAt(charIdx);
+          charIdx++;
+          window.celebrationTypewriterTimeout = setTimeout(typeNextChar, 60);
+        }
+      };
+      setTimeout(typeNextChar, 500);
       
       // Reveal the button to enter dashboard steps
       setTimeout(() => {

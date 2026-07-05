@@ -377,8 +377,28 @@
 
         <!-- TAB 2: CUSTOM UI TEXTS -->
         <div id="admin-tab-texts" class="admin-pane">
-          <h3>تخصيص نصوص صفحات التطبيق</h3>
-          <p class="help-text" style="margin-bottom: 20px;">يمكنك التحكم في كل العناوين والأزرار والرسائل التي يراها شريكك.</p>
+          <h3>تخصيص نصوص صفحات التطبيق وصور الأفاتار</h3>
+          <p class="help-text" style="margin-bottom: 20px;">يمكنك التحكم في صور الأفاتار الخاصة بكما بالإضافة لكل العناوين والأزرار والرسائل التي يراها شريكك.</p>
+
+          <!-- Avatars Upload Section (Moved here for high visibility) -->
+          <div class="form-group" style="background: #fff8fb; padding: 20px; border-radius: 12px; border: 1px solid #ffd2e5; margin-bottom: 25px;">
+            <h4 style="margin-bottom: 8px; font-weight: 800; color: var(--progress-bar-color);"><i class="fa-solid fa-user-friends"></i> صور الأفاتار للزوجين (تظهر على خريطة اللعبة) 🖼️</h4>
+            <p class="help-text" style="margin-bottom: 15px;">ارفع صورة لك وصورة لشريكك ليظهرا كأفاتار دائري يتحرك على خريطة مراحل اللعبة.</p>
+            <div class="form-group-row" style="margin-bottom: 0;">
+              <div class="form-group">
+                <label for="admin-his-photo">صورة الشاب (His Photo)</label>
+                <input type="file" id="admin-his-photo" accept="image/*">
+                <span id="his-photo-status" class="upload-status">لم يتم رفع صورة</span>
+                <input type="hidden" id="admin-his-photo-url">
+              </div>
+              <div class="form-group">
+                <label for="admin-her-photo">صورة الفتاة (Her Photo)</label>
+                <input type="file" id="admin-her-photo" accept="image/*">
+                <span id="her-photo-status" class="upload-status">لم يتم رفع صورة</span>
+                <input type="hidden" id="admin-her-photo-url">
+              </div>
+            </div>
+          </div>
           
           <div class="customizer-accordion">
             <!-- 1. شاشة القفل -->
@@ -478,10 +498,6 @@
                     <input type="text" id="text-step1Btn">
                   </div>
                 </div>
-                <div class="form-group" style="margin-bottom: 20px;">
-                  <label for="text-relationshipStartDate">تاريخ بداية علاقتنا (لعداد الأيام "أيامنا معاً")</label>
-                  <input type="text" id="text-relationshipStartDate" placeholder="اختر تاريخ بداية العلاقة..." readonly style="background-color: white; cursor: pointer; text-align: center;">
-                </div>
                 <div class="form-group-row">
                   <div class="form-group">
                     <label for="text-step2Title">عنوان الخطوة الثانية (الأحلام)</label>
@@ -536,28 +552,7 @@
             <button class="theme-preset-btn" data-theme="midnight_star"><i class="fa-solid fa-star"></i> Midnight Star</button>
             <button class="theme-preset-btn" data-theme="sweet_strawberry"><i class="fa-solid fa-candy-cane"></i> Sweet Strawberry</button>
           </div>
-
-          <hr class="divider">
-
-          <!-- Avatars Upload Section -->
-          <h3>صور الأفاتار لخريطة القلوب التفاعلية 🖼️</h3>
-          <p class="help-text" style="margin-bottom: 15px;">ارفع صورة لك وصورة لشريكك ليظهرا كأفاتار دائري يتحرك على مسار القلوب.</p>
-          <div class="form-group-row" style="margin-bottom: 25px;">
-            <div class="form-group">
-              <label for="admin-his-photo">صورة الشاب (His Photo)</label>
-              <input type="file" id="admin-his-photo" accept="image/*">
-              <span id="his-photo-status" class="upload-status">لم يتم رفع صورة</span>
-              <input type="hidden" id="admin-his-photo-url">
-            </div>
-            <div class="form-group">
-              <label for="admin-her-photo">صورة الفتاة (Her Photo)</label>
-              <input type="file" id="admin-her-photo" accept="image/*">
-              <span id="her-photo-status" class="upload-status">لم يتم رفع صورة</span>
-              <input type="hidden" id="admin-her-photo-url">
-            </div>
-          </div>
-
-          <hr class="divider">
+           <hr class="divider">
 
           <div class="customizer-accordion">
             <div class="accordion-item">
@@ -714,6 +709,13 @@
           </div>
           <p class="help-text" style="margin-bottom: 20px;">أضف أعياد ميلادكم وتواريخ أول لقاء ليقوم التطبيق بالعد التنازلي التلقائي لها وإرسال رنات تنبيهية قبلها بأسبوع.</p>
           
+          <!-- Standalone Relationship Start Date -->
+          <div class="form-group" style="background: #fff8fb; padding: 20px; border-radius: 12px; border: 1px solid #ffd2e5; margin-bottom: 25px;">
+            <h4 style="margin-bottom: 8px; font-weight: 800; color: var(--progress-bar-color);"><i class="fa-solid fa-hourglass-start"></i> تاريخ بداية علاقتنا (لعداد الأيام "أيامنا معاً")</h4>
+            <p class="help-text" style="margin-bottom: 12px;">هذا التاريخ يتم حسابه كعد تصاعدي للأيام التي مرت منذ بداية ارتباطكما، ويظهر في الصفحة الأولى بعد حل الألغاز.</p>
+            <input type="text" id="text-relationshipStartDate" placeholder="اختر تاريخ بداية العلاقة..." readonly style="background-color: white; cursor: pointer; text-align: center; max-width: 300px; border: 2px solid var(--progress-bar-color);">
+          </div>
+
           <div id="admin-dates-list" class="stages-list-container">
             <!-- Dates list with countdown labels and delete buttons -->
           </div>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'love-journey-v4';
+const CACHE_NAME = 'love-journey-v5';
 const STATIC_ASSETS = [
   './',
   './index.html',

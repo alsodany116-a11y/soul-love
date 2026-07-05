@@ -178,13 +178,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.location.href = '../'; // Redirect to user welcome page
     }
   } else {
-    // Master Admin Mode
+    // Master Admin Mode - Only allow access if unlocked or the secret '#master' hash is present
     const isMasterUnlocked = sessionStorage.getItem('unlocked_master') === 'true';
+    const isMasterHash = window.location.hash === '#master' || window.location.hash.startsWith('#master');
 
-    if (isMasterUnlocked) {
-      revealDashboard();
+    if (isMasterUnlocked || isMasterHash) {
+      if (isMasterUnlocked) {
+        revealDashboard();
+      } else {
+        revealMasterLogin();
+      }
     } else {
-      revealMasterLogin();
+      // Redirect back to welcome homepage if no space slug and no #master secret hash
+      window.location.href = '../';
     }
   }
 

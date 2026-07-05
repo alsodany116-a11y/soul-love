@@ -3,6 +3,7 @@ import {
   fetchSpaceUI, fetchMemories, fetchDreams, fetchGallery, fetchImportantDates, fetchGamesBySpace 
 } from './storage.js';
 import { applyThemeStyles, startThemeAnimation, stopThemeAnimation } from './themes.js';
+import { getCurrentTenantSlug } from './config.js';
 function showToast(msg) {
   const container = document.getElementById('toast-container');
   if (!container) return;
@@ -411,8 +412,13 @@ function setupJourneyListeners() {
   // Exit Space Button
   document.getElementById('journey-btn-logout').onclick = () => {
     if (confirm("هل تريد الخروج وإغلاق مساحة الحب الحالية؟")) {
+      const slug = getCurrentTenantSlug();
       sessionStorage.removeItem(`unlocked_${currentSpaceId}`);
-      window.location.hash = "#welcome";
+      if (slug) {
+        window.location.hash = `#lock/play/${slug}`;
+      } else {
+        window.location.hash = "#welcome";
+      }
     }
   };
 
