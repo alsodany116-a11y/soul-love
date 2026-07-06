@@ -2435,35 +2435,41 @@ input:focus, select:focus, textarea:focus {
 
 /* ============================================================================
    MOBILE NATIVE APP LAYOUT — Full-screen cards, no floating boxes
+   Uses high-specificity ID selectors to override all other rules
    ============================================================================ */
 @media (max-width: 768px) {
 
-  /* Remove extra padding from the body */
-  body, body.rtl-mode, body.admin-body {
+  body {
     padding: 0 !important;
     margin: 0 !important;
     overflow-x: hidden !important;
   }
 
-  /* App container: align from top, not center */
+  /* App container: start from top, not centered */
   #app-container {
     align-items: flex-start !important;
     justify-content: flex-start !important;
     padding: 0 !important;
     min-height: 100vh !important;
+    width: 100% !important;
   }
 
-  /* All screens: remove padding so cards touch the edges */
-  .app-screen {
+  /* All screens: remove padding entirely */
+  #screen-lock,
+  #screen-player,
+  #screen-celebration,
+  #screen-journey {
     padding: 0 !important;
     max-width: 100% !important;
+    width: 100% !important;
     min-height: 100vh !important;
     align-items: flex-start !important;
     justify-content: flex-start !important;
   }
 
-  /* Lock Box: stretch full screen — no border, no shadow, no radius */
-  .lock-box {
+  /* Lock Box: full screen native style
+     Use ID selector to beat #screen-lock .lock-box specificity */
+  #screen-lock .lock-box {
     max-width: 100% !important;
     width: 100% !important;
     min-height: 100vh !important;
@@ -2476,11 +2482,11 @@ input:focus, select:focus, textarea:focus {
     justify-content: center !important;
     align-items: center !important;
     box-sizing: border-box !important;
-    padding: 48px 24px 32px !important;
+    padding: 60px 24px 40px !important;
   }
 
-  /* Player Wrapper: full width, no gap from edges */
-  .player-wrapper {
+  /* Player Wrapper: full width */
+  #screen-player .player-wrapper {
     max-width: 100% !important;
     width: 100% !important;
     margin: 0 !important;
@@ -2488,8 +2494,8 @@ input:focus, select:focus, textarea:focus {
     gap: 0 !important;
   }
 
-  /* Stage Card: full screen, no card styling */
-  .stage-card {
+  /* Stage Card: full screen, no card chrome */
+  #screen-player .stage-card {
     border-radius: 0 !important;
     border: none !important;
     box-shadow: none !important;
@@ -2501,14 +2507,14 @@ input:focus, select:focus, textarea:focus {
   }
 
   /* Journey / Memory Cards */
-  .journey-wrapper,
-  .steps-slider-container {
+  #screen-journey .journey-wrapper,
+  #screen-journey .steps-slider-container {
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
   }
 
-  .journey-step-card {
+  #screen-journey .journey-step-card {
     border-radius: 0 !important;
     border: none !important;
     box-shadow: none !important;
@@ -2519,11 +2525,12 @@ input:focus, select:focus, textarea:focus {
     margin: 0 !important;
   }
 
-  /* Hide animated background on mobile — clean flat background */
+  /* Hide animated background canvas on mobile */
   #theme-canvas {
     display: none !important;
   }
 }
+
 
 
 
