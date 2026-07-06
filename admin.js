@@ -172,6 +172,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   if (spaceSlug) {
+    // Update PWA Manifest dynamically for this specific customer space admin panel
+    updateDynamicManifest(spaceSlug, `أدمن مساحة — ${spaceSlug}`, `/admin/${spaceSlug}`);
+
     // Customer Mode (Dynamic database switching)
     try {
       showToast("جاري ربط قاعدة بيانات المساحة... 🔐");
@@ -1828,3 +1831,50 @@ function initFlatpickr() {
     }
   }
 }
+
+/**
+ * Dynamically updates the PWA manifest of the page using a Blob URL.
+ */
+function updateDynamicManifest(slug, name, startUrl) {
+  try {
+    const manifestEl = document.getElementById('pwa-manifest');
+    if (!manifestEl) return;
+
+    const manifestData = {
+      "name": name,
+      "short_name": name,
+      "description": "لوحة تحكم مساحة الحب الخاصة بكما",
+      "start_url": startUrl,
+      "scope": startUrl,
+      "display": "standalone",
+      "display_override": ["standalone", "minimal-ui"],
+      "orientation": "portrait-primary",
+      "background_color": "#ffffff",
+      "theme_color": "#d81b60",
+      "lang": "ar",
+      "dir": "rtl",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "/icon-512.png",
+          "sizes": "512x512",
+          "type": "image/png",
+          "purpose": "any maskable"
+        }
+      ]
+    };
+
+    const manifestString = JSON.stringify(manifestData);
+    const manifestBlob = new Blob([manifestString], { type: 'application/json' });
+    const manifestURL = URL.createObjectURL(manifestBlob);
+    manifestEl.setAttribute('href', manifestURL);
+  } catch (err) {
+    console.warn("Failed to generate dynamic manifest:", err);
+  }
+}
+
