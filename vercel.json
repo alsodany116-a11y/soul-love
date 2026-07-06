@@ -10,11 +10,11 @@
   "rewrites": [
     {
       "source": "/admin/:slug",
-      "destination": "/admin-space.html?space=:slug"
+      "destination": "/admin-space?space=:slug"
     },
     {
       "source": "/:slug",
-      "destination": "/play.html?space=:slug"
+      "destination": "/play?space=:slug"
     }
   ]
 }
