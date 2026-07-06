@@ -2433,5 +2433,84 @@ input:focus, select:focus, textarea:focus {
   background: rgba(216, 27, 96, 0.05);
 }
 
+/* Premium Native App-like Layout on Mobile */
+@media (max-width: 768px) {
+  /* Prevent scrolling overflow and body styling issues */
+  body, body.rtl-mode, body.admin-body {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: var(--card-bg-color) !important;
+  }
+
+  /* Make Lock Box fill the screen entirely on mobile */
+  .lock-box {
+    max-width: 100% !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    padding: 30px 20px !important;
+    background: var(--card-bg-color) !important;
+  }
+
+  /* Make Player Wrapper and Stage Cards fill the screen */
+  .player-wrapper {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .stage-card {
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-height: 100vh !important;
+    height: 100vh !important;
+    box-sizing: border-box !important;
+    padding: 24px 16px !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+
+  /* Make Journey Cards fill the screen */
+  .journey-wrapper {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  .journey-step-card {
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-height: 100vh !important;
+    box-sizing: border-box !important;
+    padding: 24px 16px !important;
+    margin: 0 !important;
+  }
+
+  .steps-slider-container {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Hide background canvas on mobile for flat cleaner native app background */
+  #theme-canvas {
+    display: none !important;
+  }
+}
+
+
 
 
