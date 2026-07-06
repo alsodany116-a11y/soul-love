@@ -2433,21 +2433,40 @@ input:focus, select:focus, textarea:focus {
   background: rgba(216, 27, 96, 0.05);
 }
 
-/* Premium Native App-like Layout on Mobile */
+/* ============================================================================
+   MOBILE NATIVE APP LAYOUT — Full-screen cards, no floating boxes
+   ============================================================================ */
 @media (max-width: 768px) {
-  /* Prevent scrolling overflow and body styling issues */
+
+  /* Remove extra padding from the body */
   body, body.rtl-mode, body.admin-body {
     padding: 0 !important;
     margin: 0 !important;
-    background: var(--card-bg-color) !important;
+    overflow-x: hidden !important;
   }
 
-  /* Make Lock Box fill the screen entirely on mobile */
+  /* App container: align from top, not center */
+  #app-container {
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    padding: 0 !important;
+    min-height: 100vh !important;
+  }
+
+  /* All screens: remove padding so cards touch the edges */
+  .app-screen {
+    padding: 0 !important;
+    max-width: 100% !important;
+    min-height: 100vh !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+  }
+
+  /* Lock Box: stretch full screen — no border, no shadow, no radius */
   .lock-box {
     max-width: 100% !important;
     width: 100% !important;
     min-height: 100vh !important;
-    height: 100vh !important;
     border-radius: 0 !important;
     border: none !important;
     box-shadow: none !important;
@@ -2457,34 +2476,33 @@ input:focus, select:focus, textarea:focus {
     justify-content: center !important;
     align-items: center !important;
     box-sizing: border-box !important;
-    padding: 30px 20px !important;
-    background: var(--card-bg-color) !important;
+    padding: 48px 24px 32px !important;
   }
 
-  /* Make Player Wrapper and Stage Cards fill the screen */
+  /* Player Wrapper: full width, no gap from edges */
   .player-wrapper {
     max-width: 100% !important;
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+    gap: 0 !important;
   }
 
+  /* Stage Card: full screen, no card styling */
   .stage-card {
     border-radius: 0 !important;
     border: none !important;
     box-shadow: none !important;
     min-height: 100vh !important;
-    height: 100vh !important;
+    width: 100% !important;
     box-sizing: border-box !important;
-    padding: 24px 16px !important;
+    padding: 20px 16px 100px !important;
     margin: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
   }
 
-  /* Make Journey Cards fill the screen */
-  .journey-wrapper {
+  /* Journey / Memory Cards */
+  .journey-wrapper,
+  .steps-slider-container {
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
@@ -2495,21 +2513,18 @@ input:focus, select:focus, textarea:focus {
     border: none !important;
     box-shadow: none !important;
     min-height: 100vh !important;
+    width: 100% !important;
     box-sizing: border-box !important;
-    padding: 24px 16px !important;
+    padding: 20px 16px 100px !important;
     margin: 0 !important;
   }
 
-  .steps-slider-container {
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  /* Hide background canvas on mobile for flat cleaner native app background */
+  /* Hide animated background on mobile — clean flat background */
   #theme-canvas {
     display: none !important;
   }
 }
+
 
 
 
