@@ -1,5 +1,5 @@
 // Love Hunt - Game Player Engine Module
-import { fetchGame, fetchSpaceUI, incrementGameViews, incrementGameCompletions } from './storage.js';
+import { fetchGame, fetchSpaceUI, incrementGameViews, incrementGameCompletions, fetchMusicTracks } from './storage.js';
 import { applyThemeStyles, startThemeAnimation, stopThemeAnimation } from './themes.js';
 import { getCurrentTenantSlug } from './config.js';
 function showToast(msg) {
