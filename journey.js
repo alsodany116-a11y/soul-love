@@ -4,6 +4,7 @@ import {
 } from './storage.js';
 import { applyThemeStyles, startThemeAnimation, stopThemeAnimation } from './themes.js';
 import { getCurrentTenantSlug } from './config.js';
+import { playGameMusic } from './player.js';
 function showToast(msg) {
   const container = document.getElementById('toast-container');
   if (!container) return;
@@ -32,6 +33,9 @@ export async function initJourney(spaceId) {
   // Show the audio player widget once in journey mode
   const audioHud = document.getElementById('global-audio-hud');
   if (audioHud) audioHud.classList.remove('hidden');
+
+  // Load and play custom space background music and reveal the controls
+  playGameMusic(spaceId, false);
 
   setupJourneyListeners();
 

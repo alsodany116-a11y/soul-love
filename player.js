@@ -468,7 +468,12 @@ export async function setupCelebrationScreen(gameId) {
 
     // Show the audio player widget once game is solved
     const audioHud = document.getElementById('global-audio-hud');
-    if (audioHud) audioHud.classList.remove('hidden');
+    if (audioHud) {
+      audioHud.classList.remove('hidden');
+    }
+    
+    // Play custom space background music and reveal the controls
+    playGameMusic(currentGame.coupleSpaceId, false);
 
     hydratePlayerUITexts();
 
