@@ -162,7 +162,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const urlParams = new URLSearchParams(window.location.search);
-  const spaceSlug = urlParams.get('space');
+  let spaceSlug = urlParams.get('space');
+  if (!spaceSlug) {
+    const pathParts = window.location.pathname.split('/').filter(p => p);
+    // If the path is like /admin/osha-basmala, the second part (index 1) is the slug
+    if (pathParts.length > 1 && pathParts[0] === 'admin') {
+      spaceSlug = pathParts[1];
+    }
+  }
 
   if (spaceSlug) {
     // Customer Mode (Dynamic database switching)

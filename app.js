@@ -33,12 +33,19 @@ async function router() {
   // Hide all screens immediately to prevent any flash
   document.querySelectorAll('.app-screen').forEach(s => s.classList.add('hidden'));
 
-  // Get space slug from query string parameter (set by Vercel rewrite)
+  // Get space slug from query string parameter or directly from pathname
   const urlParams = new URLSearchParams(window.location.search);
-  const spaceSlug = urlParams.get('space');
+  let spaceSlug = urlParams.get('space');
+  if (!spaceSlug) {
+    const pathParts = window.location.pathname.split('/').filter(p => p);
+    // If we are on a clean path like /osha-basmala, the first part is the slug
+    if (pathParts.length > 0 && pathParts[0] !== 'play' && pathParts[0] !== 'admin' && pathParts[0] !== 'admin-space') {
+      spaceSlug = pathParts[0];
+    }
+  }
 
   if (!spaceSlug) {
-    // If no space slug is loaded on play.html, redirect back to dashboard
+    // If no space slug is loaded, redirect back to dashboard
     window.location.replace('./');
     return;
   }
