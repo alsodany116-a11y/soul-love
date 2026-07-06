@@ -34,21 +34,13 @@
   <!-- Theme Particle Background Canvas -->
   <canvas id="theme-canvas"></canvas>
 
-  <!-- Global Audio Player HUD (Persists across view changes) -->
-  <div id="global-audio-hud" class="audio-hud hidden">
-    <div class="audio-hud-info">
-      <i class="fa-solid fa-music music-note-anim"></i>
-      <span id="audio-hud-title">لحن الحب</span>
-    </div>
-    <div class="audio-hud-controls">
-      <button id="audio-hud-prev" title="الأغنية السابقة"><i class="fa-solid fa-backward"></i></button>
-      <button id="audio-hud-play" class="play-btn" title="تشغيل/إيقاف"><i class="fa-solid fa-play"></i></button>
-      <button id="audio-hud-next" title="الأغنية التالية"><i class="fa-solid fa-forward"></i></button>
-      <div class="volume-slider-container">
-        <i class="fa-solid fa-volume-low"></i>
-        <input type="range" id="audio-hud-volume" min="0" max="1" step="0.05" value="0.5">
-      </div>
-    </div>
+  <!-- Global Audio Element (invisible — controls are in each screen's widget) -->
+  <div id="global-audio-hud" style="display:none !important; visibility:hidden; position:absolute; pointer-events:none;">
+    <span id="audio-hud-title">لحن الحب</span>
+    <button id="audio-hud-prev"></button>
+    <button id="audio-hud-play"></button>
+    <button id="audio-hud-next"></button>
+    <input type="range" id="audio-hud-volume" min="0" max="1" step="0.05" value="0.5">
     <audio id="global-bg-music" loop></audio>
   </div>
   <!-- Notification Banner -->
