@@ -451,111 +451,32 @@ function escapeHTML(str) {
 }
 
 /* ============================================================================
-   STEP 5: RELATIONSHIP MILESTONES (تاريخ لقاءاتنا)
+   STEP 5: LIVE TYPEWRITER MESSAGE (رسالتنا الخاصة لايف)
    ============================================================================ */
 
+let typewriterTimeoutId = null;
+
 async function loadStep5Data() {
-  const grid = document.getElementById('journey-milestones-grid');
-  grid.innerHTML = "";
+  const container = document.getElementById('journey-typewriter-text');
+  if (!container) return;
+  container.textContent = "";
 
-  if (step5IntervalId) {
-    clearInterval(step5IntervalId);
-    step5IntervalId = null;
+  if (typewriterTimeoutId) {
+    clearTimeout(typewriterTimeoutId);
+    typewriterTimeoutId = null;
   }
 
-  try {
-    const allDates = await fetchImportantDates(currentSpaceId);
-    const milestones = allDates.filter(d => d.description && d.description.includes('[milestone]'));
+  // Get message from spaceUI or fallback
+  const message = spaceUI.step5Message || "حبيبتي، كل حرف هنا يكتب لكِ حباً ووفاءً... أردت أن أخبركِ في نهاية هذه الرحلة أنني ممتن لوجودكِ في حياتي، وسنظل معاً دائماً وأبداً. ❤️";
 
-    if (milestones.length === 0) {
-      grid.innerHTML = `<div class="info-alert">لم يتم تخليد ذكريات تاريخية مضت حتى الآن. حددوا مواعيد لقاءاتكم من لوحة التحكم!</div>`;
-      return;
+  let i = 0;
+  function typeWriter() {
+    if (i < message.length) {
+      container.textContent += message.charAt(i);
+      i++;
+      typewriterTimeoutId = setTimeout(typeWriter, 55); // Smooth writing speed
     }
-
-    // Sort milestones so the earliest event appears first
-    const sortedMilestones = [...milestones].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    sortedMilestones.forEach(m => {
-      const durationText = calculateDurationElapsed(m.date);
-      const card = document.createElement('div');
-      card.className = 'date-item-card';
-      card.innerHTML = `
-        <div>
-          <h3 class="date-card-title">${escapeHTML(m.title)}</h3>
-          <span class="date-card-value">${formatArabicDate(m.date)}</span>
-        </div>
-        <div class="date-countdown-bubble milestone-duration-bubble" data-date="${m.date}" style="background: rgba(216, 27, 96, 0.08); color: #d81b60; border-color: rgba(216, 27, 96, 0.15); font-size: 0.85rem; font-weight: bold; line-height: 1.4; padding: 6px 12px; border-radius: 20px;">
-          ${durationText}
-        </div>
-      `;
-      grid.appendChild(card);
-    });
-
-    // Start live countup timer update every 60 seconds
-    step5IntervalId = setInterval(updateMilestoneDurations, 60000);
-
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-function updateMilestoneDurations() {
-  document.querySelectorAll('.milestone-duration-bubble').forEach(bubble => {
-    const rawDate = bubble.getAttribute('data-date');
-    bubble.textContent = calculateDurationElapsed(rawDate);
-  });
-}
-
-function calculateDurationElapsed(dateStr) {
-  const past = new Date(dateStr);
-  const now = new Date();
-
-  if (past > now) {
-    return "في المستقبل";
   }
 
-  const diffMs = now - past;
-  
-  // Calculate total seconds, minutes, hours, days
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const mins = diffMins % 60;
-  
-  const diffHrs = Math.floor(diffMins / 60);
-  const hrs = diffHrs % 24;
-  
-  // To compute years, months, and days precisely:
-  let years = now.getFullYear() - past.getFullYear();
-  let months = now.getMonth() - past.getMonth();
-  let days = now.getDate() - past.getDate();
-
-  if (days < 0) {
-    months--;
-    const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-    days += prevMonth.getDate();
-  }
-  if (months < 0) {
-    years--;
-    months += 12;
-  }
-
-  // Build Arabic text representation
-  const parts = [];
-  if (years > 0) {
-    parts.push(`${years} ${years === 1 ? 'سنة' : (years === 2 ? 'سنتين' : (years <= 10 ? 'سنوات' : 'سنة'))}`);
-  }
-  if (months > 0) {
-    parts.push(`${months} ${months === 1 ? 'شهر' : (months === 2 ? 'شهرين' : (months <= 10 ? 'أشهر' : 'شهر'))}`);
-  }
-  if (days > 0) {
-    parts.push(`${days} ${days === 1 ? 'يوم' : (days === 2 ? 'يومين' : (days <= 10 ? 'أيام' : 'يوم'))}`);
-  }
-  if (hrs > 0) {
-    parts.push(`${hrs} ${hrs === 1 ? 'ساعة' : (hrs === 2 ? 'ساعتين' : (hrs <= 10 ? 'ساعات' : 'ساعة'))}`);
-  }
-  if (mins > 0) {
-    parts.push(`${mins} ${mins === 1 ? 'دقيقة' : (mins === 2 ? 'دقيقتين' : (mins <= 10 ? 'دقائق' : 'دقيقة'))}`);
-  }
-
-  if (parts.length === 0) return "منذ لحظات 💖";
-  return "منذ " + parts.join(' و ');
+  typeWriter();
 }

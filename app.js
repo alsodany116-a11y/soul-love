@@ -246,10 +246,14 @@ async function initLockScreen(targetAction, targetId) {
       
       if (space) {
         showToast("تم التحقق بنجاح! 🔓💖");
+        try {
+          playGameMusic(space.id, true);
+        } catch (musicErr) {
+          console.warn("Failed to trigger music on generic unlock:", musicErr);
+        }
         const games = await fetchGamesBySpace(space.id);
         
         if (games && games.length > 0) {
-          // Set custom theme and route straight to play screen
           applyThemeStyles(games[0].theme, document.documentElement, games[0].customization);
           window.location.hash = `#play/${games[0].id}`;
         } else {
@@ -268,6 +272,12 @@ async function initLockScreen(targetAction, targetId) {
       const isMatch = await verifySpacePassword(spaceId, password);
       if (isMatch) {
         showToast("تم تأكيد كلمة المرور بنجاح! 💖");
+        // Attempt to play music immediately on user interaction
+        try {
+          playGameMusic(spaceId, true);
+        } catch (musicErr) {
+          console.warn("Failed to trigger music on lock unlock:", musicErr);
+        }
         window.location.hash = `#${targetAction}/${targetId}`;
       } else {
         errorMsg.classList.remove('hidden');

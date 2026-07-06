@@ -60,7 +60,7 @@ export async function initPlayer(gameId) {
     applyThemeStyles(currentGame.theme, document.documentElement, currentGame.customization);
 
     // Start background music loop (if any uploaded)
-    playGameMusic(currentGame.coupleSpaceId);
+    playGameMusic(currentGame.coupleSpaceId, true);
 
     // Start background particle animation
     const canvas = document.getElementById('theme-canvas');
@@ -626,6 +626,13 @@ export async function playGameMusic(spaceId, hideHud = true) {
         audioHud.classList.add('hidden');
       } else {
         audioHud.classList.remove('hidden');
+      }
+      // If audio was previously blocked by autoplay policies, try to play it now
+      if (audio.paused) {
+        audio.play().then(() => {
+          const playBtn = document.getElementById('audio-hud-play');
+          if (playBtn) playBtn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+        }).catch(err => console.log("Failed playing cached audio on re-entry:", err));
       }
       return;
     }
