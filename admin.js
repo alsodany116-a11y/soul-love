@@ -61,7 +61,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   initFlatpickr();
 
   // Register Service Worker for PWA (Admin Specific) - Only on Master Admin
-  const isSpaceMode = new URLSearchParams(window.location.search).get('space');
+  const urlParamSpace = new URLSearchParams(window.location.search).get('space');
+  const pathParts = window.location.pathname.split('/').filter(p => p);
+  // Space mode = ?space=slug OR /admin/slug path (2 path parts starting with 'admin')
+  const isSpaceMode = urlParamSpace || (pathParts.length >= 2 && pathParts[0] === 'admin');
+
   if (!isSpaceMode && 'serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw-admin.js')
       .then(reg => console.log('Admin Service Worker Registered.', reg))
@@ -571,20 +575,24 @@ function renderSpacesList() {
 }
 
 /**
- * Setup password field toggles (reveals passcode values).
+ * Setup password field toggles using event delegation.
+ * Works for both static and dynamically loaded password fields.
  */
 function setupPasswordToggles() {
-  document.querySelectorAll('.btn-toggle-password').forEach(btn => {
-    btn.onclick = () => {
-      const input = btn.previousElementSibling;
-      if (input.type === 'password') {
-        input.type = 'text';
-        btn.innerHTML = `<i class="fa-regular fa-eye-slash"></i>`;
-      } else {
-        input.type = 'password';
-        btn.innerHTML = `<i class="fa-regular fa-eye"></i>`;
-      }
-    };
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-toggle-password');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const input = btn.previousElementSibling;
+    if (!input) return;
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.innerHTML = `<i class="fa-regular fa-eye-slash"></i>`;
+    } else {
+      input.type = 'password';
+      btn.innerHTML = `<i class="fa-regular fa-eye"></i>`;
+    }
   });
 }
 
