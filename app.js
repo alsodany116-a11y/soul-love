@@ -8,11 +8,13 @@ import { applyThemeStyles } from './themes.js';
 import { setTenantBySlug } from './config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Register Service Worker for PWA
+  // Unregister any conflicting service workers on play to prevent loading cached admin pages
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('Service Worker Registered.', reg))
-      .catch(err => console.log('Service Worker Failed to Register.', err));
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (let registration of registrations) {
+        registration.unregister();
+      }
+    });
   }
 
   // Bootstrap Router on hash changes

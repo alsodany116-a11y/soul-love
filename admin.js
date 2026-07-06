@@ -60,11 +60,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupPasswordToggles();
   initFlatpickr();
 
-  // Register Service Worker for PWA (Admin Specific)
-  if ('serviceWorker' in navigator) {
+  // Register Service Worker for PWA (Admin Specific) - Only on Master Admin
+  const isSpaceMode = new URLSearchParams(window.location.search).get('space');
+  if (!isSpaceMode && 'serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw-admin.js')
       .then(reg => console.log('Admin Service Worker Registered.', reg))
       .catch(err => console.log('Admin Service Worker Failed to Register.', err));
+  } else if (isSpaceMode && 'serviceWorker' in navigator) {
+    // Unregister any active service workers for space admins to prevent hijack/caching conflicts
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (let registration of registrations) {
+        registration.unregister();
+      }
+    });
   }
 
   // Tab triggers for master dashboard
