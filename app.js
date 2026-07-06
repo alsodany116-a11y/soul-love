@@ -207,9 +207,6 @@ async function initLockScreen(targetAction, targetId) {
       const tenantDetails = await setTenantBySlug(targetId);
       spaceId = tenantDetails.id;
       
-      // Start background music immediately (hidden HUD)
-      playGameMusic(spaceId, true);
-      
       const data = await fetchSpaceUI(spaceId);
       customTexts = data.uiTexts;
       
